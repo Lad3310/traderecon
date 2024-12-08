@@ -1,5 +1,5 @@
 import React from 'react'
-import { QueryClient, QueryClientProvider } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import TradeTable from './components/TradeTable/TradeTable'
 import './styles/main.css'
 
