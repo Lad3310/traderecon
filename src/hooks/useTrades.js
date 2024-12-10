@@ -1,24 +1,38 @@
 import { useState, useEffect } from 'react'
-import { useQuery } from 'react-query'
 import { fetchInternalTrades } from '../services/supabase'
 import { fetchExternalTrades } from '../services/tradeApi'
 import { compareTrades, findMatchingTrade } from '../services/tradeComparison'
 
 export const useTrades = () => {
   const [reconciliationData, setReconciliationData] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [internalTrades, setInternalTrades] = useState(null)
+  const [externalTrades, setExternalTrades] = useState(null)
 
-  const { 
-    data: internalTrades,
-    error: internalError,
-    isLoading: internalLoading
-  } = useQuery('internalTrades', fetchInternalTrades)
+  // Fetch both internal and external trades
+  useEffect(() => {
+    const fetchTrades = async () => {
+      try {
+        setIsLoading(true)
+        const [internal, external] = await Promise.all([
+          fetchInternalTrades(),
+          fetchExternalTrades()
+        ])
+        setInternalTrades(internal)
+        setExternalTrades(external)
+      } catch (err) {
+        setError(err)
+        console.error('Error fetching trades:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const {
-    data: externalTrades,
-    error: externalError,
-    isLoading: externalLoading
-  } = useQuery('externalTrades', fetchExternalTrades)
+    fetchTrades()
+  }, [])
 
+  // Process trades when both are available
   useEffect(() => {
     if (internalTrades && externalTrades) {
       console.log('Internal Trades:', internalTrades)
@@ -54,7 +68,7 @@ export const useTrades = () => {
 
   return {
     trades: reconciliationData,
-    isLoading: internalLoading || externalLoading,
-    error: internalError || externalError
+    isLoading,
+    error
   }
 } 
