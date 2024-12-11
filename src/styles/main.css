@@ -22,6 +22,23 @@ body {
 
 .app {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  padding: 2rem;
+}
+
+.section {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section h2 {
+  margin-bottom: 2rem;
+  color: #2c3e50;
 }
 
 /* Header styling */
@@ -448,4 +465,10 @@ tr:has(.expand-button:not(:disabled)):hover {
   content: "↔";
   color: var(--accent-red);
   margin-left: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  main {
+    padding: 1rem;
+  }
 }

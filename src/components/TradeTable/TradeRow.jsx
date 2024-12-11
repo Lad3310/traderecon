@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import ComparisonStatus from './ComparisonStatus'
 import { updateTradeStatus } from '../../services/supabase'
 
-const TradeRow = ({ trade }) => {
-  const [isExpanded, setIsExpanded] = useState(false)
-  
+const TradeRow = ({ trade, onEmailClick, isExpanded, onExpandClick }) => {
   console.log('Trade status check:', {
     actual: trade.comparison_status,
     expected: "MATCHED",
@@ -19,12 +17,6 @@ const TradeRow = ({ trade }) => {
     })
   }, [trade, isExpanded])
 
-  const handleExpand = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsExpanded(!isExpanded)
-  }
-  
   const hasMatchingTrade = trade.comparison_status?.toUpperCase() === "MATCHED"
   
   console.log('Trade data:', {
@@ -54,12 +46,18 @@ const TradeRow = ({ trade }) => {
 
   return (
     <>
-      <tr className={`main-row ${trade.isresolved ? 'resolved' : ''}`}>
+      <tr 
+        className={`main-row ${trade.isresolved ? 'resolved' : ''} ${isExpanded ? 'expanded' : ''}`}
+        onClick={onExpandClick}
+      >
         <td className="expand-cell">
           <button 
             type="button"
             className="expand-button"
-            onClick={handleExpand}
+            onClick={(e) => {
+              e.stopPropagation();
+              onExpandClick();
+            }}
             disabled={!hasMatchingTrade}
           >
             <span className="expand-icon">{isExpanded ? '▼' : '▶'}</span>
@@ -81,16 +79,19 @@ const TradeRow = ({ trade }) => {
           />
         </td>
         <td>{trade.settlement_status}</td>
-        <td>
-          {!trade.isresolved && trade.comparison_status !== 'Matched' && (
-            <button 
-              onClick={handleResolve}
-              className="resolve-button"
-              title={trade.reject_message || ''}
-            >
-              Mark Resolved
-            </button>
-          )}
+        <td className="actions-cell">
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEmailClick(trade, e);
+            }}
+            className="email-button"
+            title="Send email to counterparty"
+          >
+            ✉️
+          </button>
         </td>
       </tr>
       {isExpanded && (
