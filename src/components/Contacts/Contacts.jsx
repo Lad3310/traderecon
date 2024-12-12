@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useContacts } from '../../hooks/useContacts';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -87,10 +87,92 @@ const AddContactModal = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
+const EditContactModal = ({ isOpen, contact, onClose, onSubmit }) => {
+  const [editedContact, setEditedContact] = useState({
+    counterparty_name: '',
+    email: '',
+    phone: '',
+    dtc_number: '',
+    mpid: '',
+    product: ''
+  });
+
+  useEffect(() => {
+    if (contact) {
+      setEditedContact(contact);
+    }
+  }, [contact]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(editedContact);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="dialog-overlay">
+      <div className="dialog-content">
+        <h3>Edit Contact</h3>
+        <form onSubmit={handleSubmit} className="add-contact-form">
+          <input
+            type="text"
+            placeholder="Counterparty Name"
+            value={editedContact.counterparty_name}
+            onChange={(e) => setEditedContact({...editedContact, counterparty_name: e.target.value})}
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={editedContact.email}
+            onChange={(e) => setEditedContact({...editedContact, email: e.target.value})}
+            required
+          />
+          <input
+            type="tel"
+            placeholder="Phone"
+            value={editedContact.phone}
+            onChange={(e) => setEditedContact({...editedContact, phone: e.target.value})}
+            required
+          />
+          <input
+            type="text"
+            placeholder="DTC Number"
+            value={editedContact.dtc_number}
+            onChange={(e) => setEditedContact({...editedContact, dtc_number: e.target.value})}
+          />
+          <input
+            type="text"
+            placeholder="MPID"
+            value={editedContact.mpid}
+            onChange={(e) => setEditedContact({...editedContact, mpid: e.target.value})}
+          />
+          <input
+            type="text"
+            placeholder="Product"
+            value={editedContact.product}
+            onChange={(e) => setEditedContact({...editedContact, product: e.target.value})}
+          />
+          <div className="dialog-actions">
+            <button type="button" onClick={onClose} className="cancel-button">
+              Cancel
+            </button>
+            <button type="submit" className="submit-button">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const Contacts = () => {
-  const { contacts, loading, error, addContact, deleteContact } = useContacts();
+  const { contacts, loading, error, addContact, deleteContact, updateContact } = useContacts();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, contact: null });
+  const [editModal, setEditModal] = useState({ show: false, contact: null });
 
   const handleAddContact = async (newContact) => {
     const result = await addContact(newContact);
@@ -113,6 +195,20 @@ const Contacts = () => {
       setDeleteConfirmation({ show: false, contact: null });
     } else {
       toast.error(result.error || 'Failed to delete contact');
+    }
+  };
+
+  const handleEditClick = (contact) => {
+    setEditModal({ show: true, contact });
+  };
+
+  const handleEditContact = async (editedContact) => {
+    const result = await updateContact(editedContact);
+    if (result.success) {
+      toast.success('Contact updated successfully!');
+      setEditModal({ show: false, contact: null });
+    } else {
+      toast.error(result.error || 'Failed to update contact');
     }
   };
 
@@ -156,6 +252,13 @@ const Contacts = () => {
         onSubmit={handleAddContact}
       />
 
+      <EditContactModal
+        isOpen={editModal.show}
+        contact={editModal.contact}
+        onClose={() => setEditModal({ show: false, contact: null })}
+        onSubmit={handleEditContact}
+      />
+
       {deleteConfirmation.show && (
         <div className="dialog-overlay">
           <div className="dialog-content">
@@ -189,7 +292,12 @@ const Contacts = () => {
             {contact.mpid && <p><strong>MPID:</strong> {contact.mpid}</p>}
             <p><strong>Product:</strong> {contact.product}</p>
             <div className="contact-actions">
-              <button className="edit-button">Edit</button>
+              <button 
+                className="edit-button"
+                onClick={() => handleEditClick(contact)}
+              >
+                Edit
+              </button>
               <button 
                 className="delete-button"
                 onClick={() => handleDeleteClick(contact)}

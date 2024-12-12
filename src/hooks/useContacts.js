@@ -58,6 +58,28 @@ export const useContacts = () => {
     }
   };
 
+  const updateContact = async (updatedContact) => {
+    try {
+      const { id, ...contactDataToUpdate } = updatedContact;
+
+      const { data, error: supabaseError } = await supabase
+        .from('contacts')
+        .update(contactDataToUpdate)
+        .eq('id', id)
+        .select();
+
+      if (supabaseError) throw supabaseError;
+      
+      setContacts(prev => prev.map(contact => 
+        contact.id === id ? data[0] : contact
+      ));
+      return { success: true };
+    } catch (err) {
+      console.error('Error updating contact:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   useEffect(() => {
     fetchContacts();
   }, []);
@@ -68,6 +90,7 @@ export const useContacts = () => {
     error,
     addContact,
     deleteContact,
+    updateContact,
     refreshContacts: fetchContacts
   };
 }; 
