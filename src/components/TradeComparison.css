@@ -1,0 +1,61 @@
+.expanded-row {
+  padding: 1.5rem;
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.comparison-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.comparison-table-wrapper {
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.comparison-table th {
+  background-color: #f1f5f9;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.comparison-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.field-label {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.comparison-row.different {
+  background-color: #fee2e2;
+}
+
+.comparison-row.different td {
+  color: #991b1b;
+}
+
+.internal-value,
+.ficc-value {
+  font-family: monospace;
+}
+
+.comparison-message {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-style: italic;
+} 

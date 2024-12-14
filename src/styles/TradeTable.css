@@ -1,0 +1,78 @@
+.trade-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trade-table th,
+.trade-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+.trade-table tr:hover {
+  background-color: #f5f5f5;
+  cursor: pointer;
+}
+
+.expanded-row {
+  padding: 16px;
+  background-color: #f9f9f9;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.internal-trade,
+.ficc-trade {
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.differences {
+  display: none;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.comparison-table td {
+  padding: 6px;
+  border-bottom: 1px solid #eee;
+  transition: color 0.2s ease;
+}
+
+.comparison-table td:first-child {
+  font-weight: 500;
+  color: #666;
+  width: 40%;
+}
+
+.section-header td {
+  padding-top: 16px;
+  font-weight: bold;
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.comparison-title {
+  text-align: center;
+  color: #2c5282;
+  margin-bottom: 20px;
+}
+
+.trade-details {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.comparison-table tr {
+  transition: background-color 0.2s ease;
+} 
