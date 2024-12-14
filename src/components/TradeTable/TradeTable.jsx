@@ -14,7 +14,7 @@ const TradeTable = () => {
   const { trades, isLoading, error } = useTrades()
   const { contacts } = useContacts()
   const [filters, setFilters] = useState({
-    symbol: '',
+    cusip: '',
     dateRange: null,
     showBreaksOnly: false,
     counterparty: '',
@@ -46,8 +46,8 @@ const TradeTable = () => {
   if (error) return <ErrorMessage message={error.message} />
 
   const filteredTrades = trades.filter(trade => {
-    if (filters.showBreaksOnly && trade.comparison_status === 'Matched') return false
-    if (filters.symbol && !trade.securitysymbol.toLowerCase().includes(filters.symbol.toLowerCase())) return false
+    if (filters.showBreaksOnly && trade.comparison_status === 'MATCHED') return false
+    if (filters.cusip && !trade.cusip.toLowerCase().includes(filters.cusip.toLowerCase())) return false
     if (filters.counterparty && !trade.counterparty.toLowerCase().includes(filters.counterparty.toLowerCase())) return false
     if (filters.settlementStatus && trade.settlement_status !== filters.settlementStatus) return false
     return true
@@ -130,7 +130,47 @@ Trade Operations
           onClose={() => setAlert({ show: false, message: '', type: '' })}
         />
       )}
-      <TradeFilters filters={filters} onFilterChange={setFilters} />
+      <div className="filters-section">
+        <div className="filter-group">
+          <label>CUSIP</label>
+          <input
+            type="text"
+            placeholder="Filter by CUSIP"
+            value={filters.cusip}
+            onChange={(e) => setFilters(prev => ({
+              ...prev,
+              cusip: e.target.value
+            }))}
+          />
+        </div>
+
+        <div className="filter-group">
+          <label>Counterparty</label>
+          <input
+            type="text"
+            placeholder="Filter by counterparty..."
+            value={filters.counterparty}
+            onChange={(e) => setFilters(prev => ({
+              ...prev,
+              counterparty: e.target.value
+            }))}
+          />
+        </div>
+
+        <div className="filter-group checkbox">
+          <label>
+            <input
+              type="checkbox"
+              checked={filters.showBreaksOnly}
+              onChange={(e) => setFilters(prev => ({
+                ...prev,
+                showBreaksOnly: e.target.checked
+              }))}
+            />
+            Show Breaks Only
+          </label>
+        </div>
+      </div>
       <div className="table-wrapper">
         <table className="trade-table">
           <thead>

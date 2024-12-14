@@ -123,6 +123,7 @@ const findBestMatch = (potentialMatches, tradeDetails) => {
     return { trade, score };
   });
 
+  // Return the match only if it scores high enough
   scoredMatches.sort((a, b) => b.score - a.score);
   return scoredMatches[0]?.score >= 7 ? scoredMatches[0].trade : null;
 };
