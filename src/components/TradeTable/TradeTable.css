@@ -57,17 +57,15 @@ section {
 /* Adjust column widths to be more compact */
 .trade-table th:nth-child(1) { min-width: 24px; width: auto; }      /* Expand arrow */
 .trade-table th:nth-child(2) { min-width: 75px; width: auto; }      /* Type */
-.trade-table th:nth-child(3) { min-width: 75px; width: auto; }      /* Trade Date */
-.trade-table th:nth-child(4) { min-width: 75px; width: auto; }      /* Settlement Date */
-.trade-table th:nth-child(5) { min-width: 35px; width: auto; }      /* Age */
-.trade-table th:nth-child(6) { min-width: 70px; width: auto; }      /* CUSIP */
-.trade-table th:nth-child(7) { min-width: 70px; width: auto; }      /* Quantity */
-.trade-table th:nth-child(8) { min-width: 80px; width: auto; }      /* Net Money */
-.trade-table th:nth-child(9) { min-width: 85px; width: auto; }      /* Transaction Type */
-.trade-table th:nth-child(10) { min-width: 70px; width: auto; }     /* Buyer DTC */
-.trade-table th:nth-child(11) { min-width: 70px; width: auto; }     /* Seller DTC */
-.trade-table th:nth-child(12) { min-width: 75px; width: auto; }     /* Status */
-.trade-table th:nth-child(13) { min-width: 50px; width: auto; }     /* Actions */
+.trade-table th:nth-child(3) { min-width: 100px; width: auto; }     /* Trade Date */
+.trade-table th:nth-child(4) { min-width: 100px; width: auto; }     /* Settlement Date */
+.trade-table th:nth-child(5) { min-width: 50px; width: auto; }      /* Age */
+.trade-table th:nth-child(6) { min-width: 90px; width: auto; }      /* CUSIP */
+.trade-table th:nth-child(7) { min-width: 100px; width: auto; }     /* Quantity */
+.trade-table th:nth-child(8) { min-width: 120px; width: auto; }     /* Net Money */
+.trade-table th:nth-child(9) { min-width: 70px; width: auto; }      /* Side */
+.trade-table th:nth-child(10) { min-width: 100px; width: auto; }    /* Status */
+.trade-table th:nth-child(11) { min-width: 80px; width: auto; }     /* Actions */
 
 /* Prevent text overflow in headers */
 .trade-table th {
@@ -88,8 +86,13 @@ section {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  min-width: 32px;
-  min-height: 32px;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.email-button svg {
+  width: 24px;
+  height: 24px;
 }
 
 .email-button:hover {
@@ -223,8 +226,7 @@ section {
 .pair-status {
   display: inline-flex;
   align-items: center;
-  margin-left: 0.5rem;
-  padding: 0.125rem 0.375rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -257,9 +259,10 @@ section {
 /* Add/Update these styles */
 .filters-section {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
   margin: 1rem 0;
   padding: 1rem;
   width: 100%;
@@ -305,5 +308,152 @@ section {
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
+}
+
+/* Add alignment classes */
+.trade-table .left {
+  text-align: left;
+}
+
+.trade-table .center {
+  text-align: center;
+}
+
+.trade-table .right {
+  text-align: right;
+}
+
+/* Apply alignment to table cells */
+.trade-table td:nth-child(1) { text-align: center; }  /* Expand arrow */
+.trade-table td:nth-child(2) { text-align: left; }    /* Type */
+.trade-table td:nth-child(3) { text-align: center; }  /* Trade Date */
+.trade-table td:nth-child(4) { text-align: center; }  /* Settlement Date */
+.trade-table td:nth-child(5) { text-align: center; }  /* Age */
+.trade-table td:nth-child(6) { text-align: left; }    /* CUSIP */
+.trade-table td:nth-child(7) { text-align: right; }   /* Quantity */
+.trade-table td:nth-child(8) { text-align: right; }   /* Net Money */
+.trade-table td:nth-child(9) { text-align: center; }  /* Side */
+.trade-table td:nth-child(10) { text-align: center; } /* Status */
+.trade-table td:nth-child(11) { text-align: center; } /* Actions */
+
+/* Ensure numeric values are properly aligned */
+.trade-table td.right {
+  padding-right: 1rem;
+}
+
+/* Media queries for filters */
+@media screen and (max-width: 768px) {
+  .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem 0.5rem;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .filter-group input[type="text"] {
+    flex: 1;
+    width: 100%;
+  }
+
+  .filter-group.checkbox {
+    justify-content: center;
+  }
+}
+
+/* Table responsive styles */
+@media screen and (max-width: 1200px) {
+  .trade-table-container {
+    padding: 0;
+  }
+
+  .table-wrapper {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  /* Adjust minimum widths for smaller screens */
+  .trade-table th:nth-child(1) { min-width: 20px; }    /* Expand arrow */
+  .trade-table th:nth-child(2) { min-width: 60px; }    /* Type */
+  .trade-table th:nth-child(3) { min-width: 80px; }    /* Trade Date */
+  .trade-table th:nth-child(4) { min-width: 80px; }    /* Settlement Date */
+  .trade-table th:nth-child(5) { min-width: 40px; }    /* Age */
+  .trade-table th:nth-child(6) { min-width: 70px; }    /* CUSIP */
+  .trade-table th:nth-child(7) { min-width: 80px; }    /* Quantity */
+  .trade-table th:nth-child(8) { min-width: 100px; }   /* Net Money */
+  .trade-table th:nth-child(9) { min-width: 60px; }    /* Side */
+  .trade-table th:nth-child(10) { min-width: 80px; }   /* Status */
+  .trade-table th:nth-child(11) { min-width: 60px; }   /* Actions */
+}
+
+/* Small screen optimizations */
+@media screen and (max-width: 640px) {
+  .trade-table th,
+  .trade-table td {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.875rem;
+  }
+
+  .status-pending,
+  .status-matched,
+  .status-unmatched,
+  .status-rejected {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .pair-status {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .email-button {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 4px;
+  }
+
+  .email-button svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Add horizontal scroll indicator */
+.table-wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 50px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.9));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+@media screen and (max-width: 1200px) {
+  .table-wrapper::after {
+    opacity: 1;
+  }
+}
+
+/* Add smooth scrolling for the table wrapper */
+.table-wrapper {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optional: Add sticky header */
+@media screen and (min-width: 1201px) {
+  .trade-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f8fafc;
+    z-index: 10;
+  }
 }
   

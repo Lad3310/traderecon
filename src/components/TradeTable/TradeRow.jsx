@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import ComparisonStatus from './ComparisonStatus'
 import TradeComparison from '../TradeComparison'
 import { MdEmail } from 'react-icons/md';
+import { FaEnvelope } from 'react-icons/fa';
 
 const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick }) => {
   const formatDate = (dateString) => {
@@ -46,8 +47,26 @@ const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick })
     return Number(qty).toLocaleString();
   };
 
+  const getStatusClass = (status) => {
+    if (!status) return 'status-unmatched';
+    return `status-${status.toLowerCase()}`;
+  };
+
   const getDisplayStatus = (status) => {
-    return status === 'PENDING' ? 'UNMATCHED' : status;
+    return status || 'UNMATCHED';
+  };
+
+  const getTypeDisplay = () => {
+    return (
+      <>
+        {trade.recordType === 'advisory' && (
+          <span className="record-type advisory">
+            Advisory
+          </span>
+        )}
+        {trade.recordType !== 'advisory' && getPairStatus()}
+      </>
+    );
   };
 
   const getPairStatus = () => {
@@ -67,52 +86,34 @@ const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick })
 
   return (
     <React.Fragment>
-      <tr className={`trade-row ${className} ${trade.isPaired ? 'has-pair' : ''}`} onClick={onExpandClick}>
-        <td>
-          <button className="expand-button">
+      <tr className={`main-row ${isExpanded ? 'expanded' : ''} ${className}`}>
+        <td className="center">
+          <button className="expand-button" onClick={onExpandClick}>
             {isExpanded ? '▼' : '▶'}
           </button>
         </td>
-        <td>
-          {trade.recordType === 'advisory' ? (
-            <span className={`record-type ${trade.recordType}`}>
-              Advisory
-            </span>
-          ) : null}
-          {getPairStatus()}
-        </td>
-        <td>{formatDate(trade.tradedate)}</td>
-        <td>{formatDate(trade.settlementdate)}</td>
-        <td className="center">{trade.age || 0}</td>
-        <td>{trade.cusip || 'N/A'}</td>
+        <td className="left">{getTypeDisplay()}</td>
+        <td className="center">{formatDate(trade.tradedate)}</td>
+        <td className="center">{formatDate(trade.settlementdate)}</td>
+        <td className="center">{trade.age}</td>
+        <td className="left">{trade.cusip}</td>
         <td className="right">{formatQuantity(trade.quantity)}</td>
         <td className="right">{formatMoney(trade.net_money)}</td>
-        <td>{trade.transaction_type || 'N/A'}</td>
-        <td>{trade.buyer_dtc || 'N/A'}</td>
-        <td>{trade.seller_dtc || 'N/A'}</td>
-        <td>
-          <span className={`status-${(trade.comparison_status || 'UNMATCHED').toLowerCase()}`}>
-            {getDisplayStatus(trade.comparison_status) || 'UNMATCHED'}
+        <td className="center">{trade.transaction_type}</td>
+        <td className="center">
+          <span className={getStatusClass(trade.comparison_status)}>
+            {getDisplayStatus(trade.comparison_status)}
           </span>
         </td>
-        <td className="actions-cell">
-          <button 
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEmailClick(trade, e);
-            }}
-            className="email-button"
-            title="Send email"
-          >
-            <MdEmail size={20} />
+        <td className="center">
+          <button className="email-button" onClick={(e) => onEmailClick(trade, e)}>
+            <FaEnvelope size={24} />
           </button>
         </td>
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan="13">
+          <td colSpan="11">
             <TradeComparison 
               trade={trade.recordType === 'internal' ? trade : null}
               ficcTrade={trade.recordType === 'advisory' ? trade : trade.pairedTrade}

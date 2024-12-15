@@ -175,19 +175,17 @@ Trade Operations
         <table className="trade-table">
           <thead>
             <tr>
-              <th></th>
-              <th>Type</th>
-              <th>Trade Date</th>
-              <th>Settlement Date</th>
-              <th>Age</th>
-              <th>CUSIP</th>
-              <th>Quantity</th>
-              <th>Net Money</th>
-              <th>Side</th>
-              <th>Buyer DTC</th>
-              <th>Seller DTC</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th className="center"></th>
+              <th className="left">Type</th>
+              <th className="center">Trade Date</th>
+              <th className="center">Settlement Date</th>
+              <th className="center">Age</th>
+              <th className="left">CUSIP</th>
+              <th className="right">Quantity</th>
+              <th className="right">Net Money</th>
+              <th className="center">Side</th>
+              <th className="center">Status</th>
+              <th className="center">Actions</th>
             </tr>
           </thead>
           <tbody>
