@@ -27,4 +27,10 @@ node_modules/.cache/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log* .env
+node_modules/
+.DS_Store
+
+# Environment files
 .env
+.env.local
+.env.*.local
