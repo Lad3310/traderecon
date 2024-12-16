@@ -1,59 +1,70 @@
 import { supabase } from '../lib/supabaseClient';
 import { FICCMessageParser } from './ficcService';
+import { FIRM_IDENTIFIERS } from '../constants/firmIdentifiers';
 
-export const processIncomingFICCMessage = async (rawMessage, messageType) => {
+const MATCH_THRESHOLD = 20; // Require most fields to match (about 70% of max score)
+
+export const processIncomingFICCMessage = async (messageContent, messageType) => {
   try {
-    // Parse the message
-    const parsedMessage = FICCMessageParser.parseMessage(rawMessage);
-    
-    // Validate required tags
-    const validation = FICCMessageParser.validateMessage(parsedMessage, messageType);
-    if (!validation.isValid) {
-      throw new Error(`Invalid message: Missing required tags: ${validation.missingTags.join(', ')}`);
+    console.log('Processing incoming FICC message:', { messageContent, messageType });
+
+    // If it's a status message (MT509), handle status update
+    if (messageType === 'MT509') {
+      const statusUpdate = {
+        type: messageContent.status.type,
+        reason: messageContent.status.reason,
+        sender: messageContent.header.sender,
+        receiver: messageContent.header.receiver,
+        submittingFirm: messageContent.reference?.submittingFirm,
+        memberFirm: messageContent.reference?.memberFirm
+      };
+
+      if (messageContent.reference?.tradeId) {
+        const tradeId = messageContent.reference.tradeId;
+        await updateTradeWithFICCInfo(tradeId, messageContent);
+      }
+
+      return {
+        success: true,
+        type: 'status_update',
+        message: statusUpdate
+      };
     }
 
-    // Extract trade details
-    const tradeDetails = FICCMessageParser.extractTradeDetails(parsedMessage);
+    // If it's a trade message (MT518), process trade details
+    if (messageType === 'MT518') {
+      const tradeDetails = {
+        tradeDate: messageContent.tradeDet.tradeDate,
+        settlementDate: messageContent.tradeDet.settlementDate,
+        cusip: messageContent.tradeDet.cusip,
+        quantity: messageContent.tradeDet.quantity,
+        price: messageContent.tradeDet.price,
+        transactionType: messageContent.tradeDet.transactionType,
+        buyerFirm: messageContent.header.receiver,
+        sellerFirm: messageContent.header.sender
+      };
 
-    // Store the FICC message
-    const { error: storeError } = await supabase
-      .from('ficc_messages')
-      .insert({
-        message_type: messageType,
-        external_reference: tradeDetails.transactionId,
-        trade_date: tradeDetails.tradeDate,
-        settlement_date: tradeDetails.settlementDate,
-        cusip: tradeDetails.security,
-        quantity: tradeDetails.quantity,
-        price: tradeDetails.price,
-        counterparty: tradeDetails.buyer || tradeDetails.seller,
-        status_type: tradeDetails.status || 'PENDING',
-        message_content: parsedMessage
-      });
+      const matchingTrade = await findMatchingTrade(tradeDetails);
+      if (matchingTrade) {
+        await updateTradeWithFICCInfo(matchingTrade.id, messageContent);
+        return {
+          success: true,
+          type: 'trade_matched',
+          tradeId: matchingTrade.id
+        };
+      }
 
-    if (storeError) throw storeError;
-
-    // Find matching internal trade
-    const matchedTrade = await findMatchingTrade(tradeDetails);
-    
-    if (matchedTrade) {
-      // Update FICC message with matched trade
-      await supabase
-        .from('ficc_messages')
-        .update({ 
-          matched_trade_id: matchedTrade.id,
-          status_type: 'MATCHED'
-        })
-        .eq('external_reference', tradeDetails.transactionId);
-
-      // Update trade with FICC info
-      await updateTradeWithFICCInfo(matchedTrade.id, tradeDetails);
+      return {
+        success: true,
+        type: 'trade_received',
+        message: tradeDetails
+      };
     }
 
     return {
       success: true,
-      message: matchedTrade ? 'Message matched to trade' : 'Message stored without match',
-      matchedTrade
+      type: 'message_processed',
+      message: messageContent
     };
 
   } catch (error) {
@@ -65,37 +76,84 @@ export const processIncomingFICCMessage = async (rawMessage, messageType) => {
   }
 };
 
-const findMatchingTrade = async (tradeDetails) => {
-  const netMoneyTolerance = 0.01;
+export const findMatchingTrade = async (ficcMessage) => {
+  console.log('Finding match with new firm identifiers:', {
+    submittingFirm: ficcMessage.submitting_member_executing_firm_customer_id,
+    memberFirm: ficcMessage.member_firm_id,
+    contraFirm: ficcMessage.contra_firm_executing_firm_customer_id,
+    contraFirmId: ficcMessage.contra_firm_id
+  });
 
-  // Query using required fields and party information
-  const { data: potentialMatches, error } = await supabase
+  const { data: potentialMatches } = await supabase
     .from('trades')
-    .select(`
-      *,
-      age:get_trade_age(trades)
-    `)
-    .eq('trade_date', tradeDetails.tradeDate)
-    .eq('securitysymbol', tradeDetails.securitySymbol)
-    .eq('quantity', tradeDetails.quantity)
-    .eq('settlement_date', tradeDetails.settlementDate)
-    // Match on buyer/seller information
-    .eq('buyer_firm', tradeDetails.buyerFirm)
-    .eq('buyer_dtc', tradeDetails.buyerDTC)
-    .eq('seller_firm', tradeDetails.sellerFirm)
-    .eq('seller_dtc', tradeDetails.sellerDTC)
-    .eq('comparison_status', 'PENDING')
-    .gte('net_money', tradeDetails.netMoney - netMoneyTolerance)
-    .lte('net_money', tradeDetails.netMoney + netMoneyTolerance);
+    .select('*')
+    .eq('cusip', ficcMessage.cusip)
+    .eq('trade_date', ficcMessage.trade_date)
+    .eq('settlement_date', ficcMessage.settlement_date);
 
-  if (error) {
-    console.error('Error finding matches:', error);
-    return null;
+  if (!potentialMatches?.length) return null;
+
+  // Score and sort potential matches with new criteria
+  const scoredMatches = potentialMatches.map(trade => ({
+    trade,
+    score: calculateMatchScore(trade, ficcMessage)
+  }));
+
+  scoredMatches.sort((a, b) => b.score - a.score);
+  
+  return scoredMatches[0].score >= MATCH_THRESHOLD ? scoredMatches[0].trade : null;
+};
+
+const calculateMatchScore = (trade, ficcMessage) => {
+  const parsedFICC = parseFICCMessage(ficcMessage);
+  
+  // Enhanced logging with both database and display names
+  console.log('Calculating match score:', {
+    trade: {
+      cusip: trade.cusip,
+      quantity: trade.quantity,
+      price: trade.price,
+      firms: {
+        [FIRM_IDENTIFIERS.submitting_member_executing_firm_customer_id.displayName]: 
+          trade.submitting_member_executing_firm_customer_id,
+        [FIRM_IDENTIFIERS.member_firm_id.displayName]: 
+          trade.member_firm_id,
+        [FIRM_IDENTIFIERS.contra_firm_executing_firm_customer_id.displayName]: 
+          trade.contra_firm_executing_firm_customer_id,
+        [FIRM_IDENTIFIERS.contra_firm_id.displayName]: 
+          trade.contra_firm_id
+      }
+    },
+    ficc: {
+      cusip: parsedFICC.cusip,
+      quantity: parsedFICC.quantity,
+      price: parsedFICC.price,
+      firms: parsedFICC.firms
+    }
+  });
+
+  let score = 0;
+
+  // Core trade details
+  if (trade.cusip === parsedFICC.cusip) score += 5;
+  if (trade.quantity === parsedFICC.quantity) score += 5;
+  if (Math.abs(trade.price - parsedFICC.price) < 0.0001) score += 3;
+
+  // Firm identifiers based on transaction type
+  const isTradeSubmitter = trade.transaction_type === 'SELL';
+  if (isTradeSubmitter) {
+    if (trade.submitting_member_executing_firm_customer_id === parsedFICC.submittingFirm) score += 4;
+    if (trade.member_firm_id === parsedFICC.submittingFirmId) score += 4;
+    if (trade.contra_firm_executing_firm_customer_id === parsedFICC.contraFirm) score += 4;
+    if (trade.contra_firm_id === parsedFICC.contraFirmId) score += 4;
+  } else {
+    if (trade.contra_firm_executing_firm_customer_id === parsedFICC.submittingFirm) score += 4;
+    if (trade.contra_firm_id === parsedFICC.submittingFirmId) score += 4;
+    if (trade.submitting_member_executing_firm_customer_id === parsedFICC.contraFirm) score += 4;
+    if (trade.member_firm_id === parsedFICC.contraFirmId) score += 4;
   }
 
-  return potentialMatches?.length > 1 
-    ? findBestMatch(potentialMatches, tradeDetails)
-    : potentialMatches?.[0] || null;
+  return score;
 };
 
 const findBestMatch = (potentialMatches, tradeDetails) => {
@@ -129,19 +187,46 @@ const findBestMatch = (potentialMatches, tradeDetails) => {
 };
 
 const updateTradeWithFICCInfo = async (tradeId, ficcMessage) => {
-  const { error } = await supabase
-    .from('trades')
-    .update({
-      ficc_status: getFICCStatus(ficcMessage),
-      ficc_reference: getFICCReference(ficcMessage),
-      counterparty_reference: getCounterpartyRef(ficcMessage),
-      comparison_status: getComparisonStatus(ficcMessage),
-      message_history: supabase.raw('array_append(message_history, ?)', [ficcMessage])
-    })
-    .eq('id', tradeId);
+  try {
+    // First get existing message history
+    const { data: existingTrade, error: fetchError } = await supabase
+      .from('trades')
+      .select('message_history')
+      .eq('id', tradeId)
+      .single();
 
-  if (error) {
-    console.error('Error updating trade with FICC info:', error);
+    if (fetchError) {
+      console.error('Error fetching existing trade:', fetchError);
+      throw fetchError;
+    }
+
+    // Combine existing messages with new message
+    const existingMessages = existingTrade.message_history || [];
+    const newMessageHistory = [...existingMessages, ficcMessage];
+
+    // Create the update data
+    const updateData = {
+      ficc_status: getFICCStatus(ficcMessage),
+      external_reference: getFICCReference(ficcMessage),
+      message_history: JSON.stringify(newMessageHistory)
+    };
+
+    const { data, error } = await supabase
+      .from('trades')
+      .update(updateData)
+      .eq('id', tradeId)
+      .select();
+
+    if (error) {
+      console.error('Error updating trade with FICC info:', error);
+      throw error;
+    }
+
+    console.log('✅ Successfully updated trade:', tradeId);
+    return data;
+  } catch (error) {
+    console.error('❌ Error updating trade:', error);
+    throw error;
   }
 };
 
@@ -280,4 +365,90 @@ const getFICCReference = (message) => {
 const getCounterpartyRef = (message) => {
   // Extract counterparty reference from message
   return message.counterpartyRef || message.broker_reference || null;
+};
+
+const parseFICCMessage = (messageContent) => {
+  // Handle both new and old message formats
+  if (messageContent.CONFDET) {
+    // Parse traditional FICC format
+    return {
+      cusip: messageContent.CONFDET['35B']?.CUSIP,
+      quantity: parseQuantity(messageContent.CONFDET['36B']?.SETT),
+      price: parsePrice(messageContent.CONFDET['90A']?.DEAL),
+      tradedate: parseDate(messageContent.CONFDET['98A']?.TRAD),
+      settlementdate: parseDate(messageContent.CONFDET['98A']?.SETT),
+      submittingFirm: messageContent.CONFDET['95P']?.BUYR || messageContent.CONFDET['95P']?.SELL,
+      submittingFirmId: messageContent.CONFDET['95R']?.BUYR || messageContent.CONFDET['95R']?.SELL,
+      contraFirm: messageContent.CONFDET['95P']?.SELL || messageContent.CONFDET['95P']?.BUYR,
+      contraFirmId: messageContent.CONFDET['95R']?.SELL || messageContent.CONFDET['95R']?.BUYR,
+      netMoney: calculateNetMoney(parseQuantity(messageContent.CONFDET['36B']?.SETT), parsePrice(messageContent.CONFDET['90A']?.DEAL))
+    };
+  }
+
+  // Handle our simulator format
+  const tradeDet = messageContent.content?.tradeDet;
+  if (tradeDet) {
+    const quantity = tradeDet.quantity;
+    const price = tradeDet.price;
+    
+    // Use exact field names from database
+    return {
+      cusip: tradeDet.cusip,
+      quantity: quantity,
+      price: price,
+      tradedate: messageContent.tradedate || tradeDet.tradeDate,
+      settlementdate: messageContent.settlementdate || tradeDet.settlementDate,
+      transactionType: tradeDet.transactionType,
+      submittingFirm: messageContent.content?.header?.sender,
+      submittingFirmId: messageContent.submitting_member_executing_firm_customer_id,
+      contraFirm: messageContent.content?.header?.receiver,
+      contraFirmId: messageContent.contra_firm_id,
+      netMoney: calculateNetMoney(quantity, price)
+    };
+  }
+
+  return null;
+};
+
+// Helper function to calculate net money
+const calculateNetMoney = (quantity, price) => {
+  if (!quantity || !price) return null;
+  return (quantity * price) / 100; // Price is in percentage terms
+};
+
+// Update the comparison logic to use exact field names
+const compareTrades = (internalTrade, ficcMessage) => {
+  const parsedFICC = parseFICCMessage(ficcMessage);
+  
+  console.log('Comparing trades:', {
+    internal: {
+      tradedate: internalTrade.tradedate,
+      settlementdate: internalTrade.settlementdate,
+      netMoney: internalTrade.net_money
+    },
+    ficc: {
+      tradedate: parsedFICC.tradedate,
+      settlementdate: parsedFICC.settlementdate,
+      netMoney: parsedFICC.netMoney
+    }
+  });
+
+  // ... rest of comparison logic
+};
+
+// Helper functions for parsing FICC format
+const parseQuantity = (settString) => {
+  if (!settString) return null;
+  const match = settString.match(/UNIT\/(\d+)/);
+  return match ? parseInt(match[1]) : null;
+};
+
+const parsePrice = (priceString) => {
+  if (!priceString) return null;
+  return parseFloat(priceString.replace(',', '.'));
+};
+
+const parseDate = (dateString) => {
+  if (!dateString) return null;
+  return `${dateString.slice(0,4)}-${dateString.slice(4,6)}-${dateString.slice(6,8)}`;
 }; 

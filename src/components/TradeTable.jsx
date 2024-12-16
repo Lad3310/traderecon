@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getTradeComparison } from '../services/matchingService';
+import { supabase } from '../lib/supabase';
 
 const ExpandedRow = ({ trade }) => {
   const [comparison, setComparison] = useState(null);
@@ -178,6 +179,27 @@ const TradeTable = ({ trades }) => {
     }
     setExpandedRows(newExpanded);
   };
+
+  useEffect(() => {
+    const tradesSubscription = supabase
+      .from('trades')
+      .on('UPDATE', payload => {
+        console.log('Trade updated:', payload);
+      })
+      .subscribe();
+
+    const comparisonsSubscription = supabase
+      .from('trade_comparisons')
+      .on('UPDATE', payload => {
+        console.log('Comparison updated:', payload);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeSubscription(tradesSubscription);
+      supabase.removeSubscription(comparisonsSubscription);
+    };
+  }, []);
 
   return (
     <table className="trade-table">

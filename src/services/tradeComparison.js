@@ -4,7 +4,7 @@ export const compareTrades = (internalTrade, ficcTrade) => {
   if (!internalTrade || !ficcTrade) return null;
 
   const discrepancies = {
-    isPaired: false,
+    isPaired: true,
     isMatched: false,
     differences: [],
     details: []
@@ -15,10 +15,21 @@ export const compareTrades = (internalTrade, ficcTrade) => {
     internalTrade.cusip === ficcTrade.cusip &&
     internalTrade.tradedate === ficcTrade.tradedate &&
     internalTrade.settlementdate === ficcTrade.settlementdate &&
-    internalTrade.quantity === ficcTrade.quantity &&
-    // Transaction types must be opposite
-    ((internalTrade.transaction_type === 'BUY' && ficcTrade.transaction_type === 'SELL') ||
-     (internalTrade.transaction_type === 'SELL' && ficcTrade.transaction_type === 'BUY'));
+    internalTrade.quantity === ficcTrade.quantity;
+
+  // Check firm identifiers match in opposite directions
+  const firmIdentifiersMatch = 
+    // Our submitting firm should match their contra firm
+    internalTrade.submitting_member_executing_firm_customer_id === ficcTrade.contra_firm_executing_firm_customer_id &&
+    internalTrade.member_firm_id === ficcTrade.contra_firm_id &&
+    // Their submitting firm should match our contra firm
+    internalTrade.contra_firm_executing_firm_customer_id === ficcTrade.submitting_member_executing_firm_customer_id &&
+    internalTrade.contra_firm_id === ficcTrade.member_firm_id;
+
+  // Transaction types must be opposite
+  const transactionTypesMatch = 
+    (internalTrade.transaction_type === 'BUY' && ficcTrade.transaction_type === 'SELL') ||
+    (internalTrade.transaction_type === 'SELL' && ficcTrade.transaction_type === 'BUY');
 
   // Price comparison with tolerance
   const priceMatch = Math.abs(internalTrade.price - ficcTrade.price) <= 0.0001;
@@ -27,6 +38,20 @@ export const compareTrades = (internalTrade, ficcTrade) => {
   const netMoneyMatch = Math.abs(internalTrade.net_money - ficcTrade.net_money) <= 0.01;
 
   // Record differences
+  if (!firmIdentifiersMatch) {
+    discrepancies.differences.push({
+      field: 'firm_identifiers',
+      internal: {
+        submitting: `${internalTrade.submitting_member_executing_firm_customer_id}/${internalTrade.member_firm_id}`,
+        contra: `${internalTrade.contra_firm_executing_firm_customer_id}/${internalTrade.contra_firm_id}`
+      },
+      ficc: {
+        submitting: `${ficcTrade.submitting_member_executing_firm_customer_id}/${ficcTrade.member_firm_id}`,
+        contra: `${ficcTrade.contra_firm_executing_firm_customer_id}/${ficcTrade.contra_firm_id}`
+      }
+    });
+  }
+
   if (!priceMatch) {
     discrepancies.differences.push({
       field: 'price',
@@ -44,48 +69,56 @@ export const compareTrades = (internalTrade, ficcTrade) => {
   }
 
   // Set match status
-  discrepancies.isPaired = coreFieldsMatch;
-  discrepancies.isMatched = coreFieldsMatch && priceMatch && netMoneyMatch;
+  discrepancies.isPaired = coreFieldsMatch && firmIdentifiersMatch && transactionTypesMatch;
+  discrepancies.isMatched = discrepancies.isPaired && priceMatch && netMoneyMatch;
 
+  // Update the trade_comparisons table
+  const updateComparison = async () => {
+    const { error } = await supabase
+      .from('trade_comparisons')
+      .upsert({
+        trade_id: internalTrade.id,
+        ficc_message_id: ficcTrade.id,
+        is_paired: true,
+        is_matched: discrepancies.isMatched,
+        comparison_status: discrepancies.isMatched ? 'MATCHED' : 'UNMATCHED',
+        differences: discrepancies.differences
+      });
+
+    if (error) {
+      console.error('Error updating trade comparison:', error);
+    }
+  };
+
+  updateComparison();
   return discrepancies;
 };
 
-// Update the trade status in the database
-const updateTradeStatus = async (tradeId, status) => {
-  const { error } = await supabase
-    .from('trades')
-    .update({ 
-      comparison_status: status,
-      isresolved: status === 'MATCHED'
-    })
-    .eq('id', tradeId);
-
-  if (error) {
-    console.error('Error updating trade status:', error);
-    throw error;
-  }
-};
-
-// Main function to process trade comparison
-export const processTradePairing = async (trade, ficcTrade) => {
-  const comparison = compareTrades(trade, ficcTrade);
-  
-  if (comparison) {
-    const status = comparison.isMatched ? 'MATCHED' : 'UNMATCHED';
-    await updateTradeStatus(trade.id, status);
-  }
-
-  return comparison;
-};
-
 export const findMatchingTrade = async (ficcMessage) => {
+  // First check existing comparisons
+  const { data: existingComparison } = await supabase
+    .from('trade_comparisons')
+    .select('trade_id')
+    .eq('ficc_message_id', ficcMessage.id)
+    .single();
+
+  if (existingComparison) {
+    const { data: trade } = await supabase
+      .from('trades')
+      .select('*')
+      .eq('id', existingComparison.trade_id)
+      .single();
+    
+    return trade;
+  }
+
+  // If no existing comparison, look for potential matches
   const { data: potentialMatches } = await supabase
     .from('trades')
     .select('*')
     .eq('cusip', ficcMessage.cusip)
-    .eq('trade_date', ficcMessage.trade_date)
-    .eq('settlement_date', ficcMessage.settlement_date)
-    .eq('transaction_type', ficcMessage.transaction_type);
+    .eq('tradedate', ficcMessage.tradedate)
+    .eq('settlementdate', ficcMessage.settlementdate);
 
   if (!potentialMatches?.length) return null;
 
@@ -96,8 +129,22 @@ export const findMatchingTrade = async (ficcMessage) => {
   }));
 
   scoredMatches.sort((a, b) => b.score - a.score);
+  
+  if (scoredMatches[0].score >= 10) {
+    // Create comparison record for the match
+    await supabase
+      .from('trade_comparisons')
+      .insert({
+        trade_id: scoredMatches[0].trade.id,
+        ficc_message_id: ficcMessage.id,
+        is_paired: true,
+        is_matched: false // Will be updated after full comparison
+      });
+    
+    return scoredMatches[0].trade;
+  }
 
-  return scoredMatches[0].score >= 10 ? scoredMatches[0].trade : null;
+  return null;
 };
 
 const calculateMatchScore = (trade, ficcMessage) => {

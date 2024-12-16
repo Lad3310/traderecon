@@ -141,16 +141,38 @@ export class FICCMessageParser {
     };
   }
 
-  static async processMessage(rawMessage, messageType) {
-    const parsedMessage = this.parseMessage(rawMessage);
-    const validation = this.validateMessage(parsedMessage, messageType);
-    
-    if (!validation.isValid) {
-      throw new Error(`Invalid message: Missing required tags: ${validation.missingTags.join(', ')}`);
-    }
+  static async processMessage(message, messageType) {
+    try {
+      console.log('Processing message in FICCParser:', { message, messageType });
+      
+      // Since we're already getting a structured message, no need to parse
+      if (typeof message === 'object') {
+        return {
+          messageType: messageType,
+          header: message.header,
+          status: message.status,
+          tradeDet: message.tradeDet,
+          // Add any other fields you need
+        };
+      }
 
-    const tradeDetails = this.extractTradeDetails(parsedMessage);
-    return tradeDetails;
+      // Keep the old parsing logic for backward compatibility
+      if (typeof message === 'string') {
+        const parsedMessage = this.parseMessage(message);
+        const validation = this.validateMessage(parsedMessage, messageType);
+        
+        if (!validation.isValid) {
+          throw new Error(`Invalid message: Missing required tags: ${validation.missingTags.join(', ')}`);
+        }
+
+        return this.extractTradeDetails(parsedMessage);
+      }
+
+      throw new Error('Invalid message format');
+    } catch (error) {
+      console.error('Error in FICCMessageParser:', error);
+      throw error;
+    }
   }
 }
 

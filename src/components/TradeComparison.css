@@ -22,15 +22,27 @@
   font-size: 0.875rem;
 }
 
+/* Base table header styles */
 .comparison-table th {
   background-color: #f1f5f9;
   padding: 0.75rem 1rem;
-  text-align: left;
   font-weight: 600;
   color: #64748b;
+  text-align: center !important; /* Force center alignment */
+}
+
+/* Column widths */
+.comparison-table th.field-column {
+  width: 25%;
+}
+
+.comparison-table th.internal-column,
+.comparison-table th.counterparty-column {
+  width: 37.5%;
 }
 
 .comparison-table td {
+  text-align: left;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -58,4 +70,105 @@
   padding: 2rem;
   color: #64748b;
   font-style: italic;
+}
+
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-content {
+  position: absolute;
+  z-index: 1000;
+  background-color: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  width: max-content;
+  max-width: 300px;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.tooltip-content p {
+  margin: 4px 0;
+}
+
+.tooltip-content::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 6px 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent #333 transparent;
+}
+
+.section-divider td {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #4b5563;
+  padding: 1rem;
+  font-size: 0.875rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.section-divider {
+  margin-top: 1rem;
+}
+
+/* Remove bottom border from the main table's last row */
+.comparison-table:first-of-type tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Adjust spacing between tables */
+.firm-details .comparison-table {
+  margin-top: 0.5rem;
+}
+
+/* Style the firm details header */
+.firm-details h4 {
+  padding: 0.5rem 1rem;
+  background-color: #f1f5f9;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.firm-pair {
+  margin-bottom: 1.5rem;
+}
+
+.firm-pair h5 {
+  color: #4b5563;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+/* Add a subtle divider between our side and counterparty side */
+.firm-pair + .firm-pair {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 1rem;
+}
+
+/* Keep data cells left-aligned */
+.comparison-table td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Monospace values but maintain alignment */
+.internal-value,
+.ficc-value {
+  font-family: monospace;
+  text-align: left;
 } 

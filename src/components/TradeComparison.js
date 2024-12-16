@@ -1,9 +1,255 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './TradeComparison.css';
+import { FIRM_IDENTIFIERS } from '../constants/firmIdentifiers';
+
+// Custom tooltip component
+const CustomTooltip = ({ children, title }) => {
+  const [isVisible, setIsVisible] = React.useState(false);
+  
+  return (
+    <div 
+      className="tooltip-container"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      {isVisible && (
+        <div className="tooltip-content">
+          {title}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FirmIdentifierRow = ({ label, dbField, internalValue, ficcValue }) => {
+  const fieldInfo = FIRM_IDENTIFIERS[dbField];
+  
+  return (
+    <CustomTooltip 
+      title={
+        <div>
+          <p>{fieldInfo.description}</p>
+          <p>Example: {fieldInfo.example}</p>
+          <p>Database field: {dbField}</p>
+        </div>
+      }
+    >
+      <tr className={internalValue !== ficcValue ? 'comparison-row different' : 'comparison-row'}>
+        <td className="field-label">{label}</td>
+        <td className="internal-value">{internalValue || 'N/A'}</td>
+        <td className="ficc-value">{ficcValue || 'N/A'}</td>
+      </tr>
+    </CustomTooltip>
+  );
+};
 
 const TradeComparison = ({ trade, ficcTrade }) => {
-  if (!trade || !ficcTrade) {
+  const [isProperlySynced, setIsProperlySynced] = React.useState(true);
+
+  // First, determine if this is an advisory record
+  const isAdvisory = trade?.recordType === 'advisory';
+
+  // For advisory records, show blank on our side and FICC message on counterparty side
+  const ourDetails = isAdvisory ? null : trade;
+  const counterpartyDetails = isAdvisory ? trade : ficcTrade;
+
+  useEffect(() => {
+    console.log('=== TRADE COMPARISON MOUNT ===', {
+      component: 'TradeComparison',
+      isAdvisory,
+      tradeId: trade?.id,
+      tradeDate: trade?.tradedate,
+      settlementDate: trade?.settlementdate,
+      recordType: trade?.recordType
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log('=== TRADE COMPARISON IDENTITY CHECK ===', {
+      tradeId: trade?.id,
+      ficcTradeId: ficcTrade?.id,
+      trade: {
+        rawTradeDate: trade?.tradedate,
+        rawSettlementDate: trade?.settlementdate,
+      },
+      ficcTrade: {
+        rawTradeDate: ficcTrade?.tradedate,
+        rawSettlementDate: ficcTrade?.settlementdate,
+      }
+    });
+  }, [trade, ficcTrade]);
+
+  useEffect(() => {
+    console.log('=== TRADE COMPARISON DATA ===');
+    console.log('Parent Trade:', {
+      tradedate: trade?.tradedate,
+      settlementdate: trade?.settlementdate,
+      recordType: trade?.recordType,
+      cusip: trade?.cusip
+    });
+    console.log('FICC Trade:', {
+      tradedate: ficcTrade?.tradedate,
+      settlementdate: ficcTrade?.settlementdate,
+      recordType: ficcTrade?.recordType,
+      cusip: ficcTrade?.cusip
+    });
+    console.log('=== END COMPARISON DATA ===');
+  }, [trade, ficcTrade]);
+
+  useEffect(() => {
+    console.log('=== TRADE COMPARISON FULL DATA ===');
+    console.log('Trade Details:', {
+      id: trade?.id,
+      cusip: trade?.cusip,
+      tradedate: trade?.tradedate,
+      settlementdate: trade?.settlementdate,
+      transaction_type: trade?.transaction_type,
+      recordType: trade?.recordType
+    });
+    console.log('FICC Trade Details:', {
+      id: ficcTrade?.id,
+      cusip: ficcTrade?.cusip,
+      tradedate: ficcTrade?.tradedate,
+      settlementdate: ficcTrade?.settlementdate,
+      transaction_type: ficcTrade?.transaction_type,
+      recordType: ficcTrade?.recordType
+    });
+    console.log('=== END TRADE COMPARISON FULL DATA ===');
+  }, [trade, ficcTrade]);
+
+  useEffect(() => {
+    console.log('=== TRADE PAIRING CRITERIA ===');
+    console.log('Internal Trade:', {
+      id: trade?.id,
+      cusip: trade?.cusip,
+      tradedate: trade?.tradedate,
+      settlementdate: trade?.settlementdate,
+      transaction_type: trade?.transaction_type,
+      isPaired: trade?.isPaired
+    });
+    console.log('FICC Trade:', {
+      id: ficcTrade?.id,
+      cusip: ficcTrade?.cusip,
+      tradedate: ficcTrade?.tradedate,
+      settlementdate: ficcTrade?.settlementdate,
+      transaction_type: ficcTrade?.transaction_type
+    });
+    console.log('Pairing Criteria Met:', {
+      sameCusip: trade?.cusip === ficcTrade?.cusip,
+      sameTradeDate: trade?.tradedate === ficcTrade?.tradedate,
+      sameSettleDate: trade?.settlementdate === ficcTrade?.settlementdate,
+      oppositeTypes: (trade?.transaction_type === 'BUY' && ficcTrade?.transaction_type === 'SELL') ||
+                    (trade?.transaction_type === 'SELL' && ficcTrade?.transaction_type === 'BUY')
+    });
+    console.log('=== END PAIRING CRITERIA ===');
+  }, [trade, ficcTrade]);
+
+  useEffect(() => {
+    console.log('=== TRADE COMPARISON RAW DATES ===', {
+      trade: {
+        rawTradeDate: trade?.tradedate,
+        rawSettlementDate: trade?.settlementdate,
+        formattedTradeDate: formatDate(trade?.tradedate),
+        formattedSettlementDate: formatDate(trade?.settlementdate)
+      },
+      ficcTrade: {
+        rawTradeDate: ficcTrade?.tradedate,
+        rawSettlementDate: ficcTrade?.settlementdate,
+        formattedTradeDate: formatDate(ficcTrade?.tradedate),
+        formattedSettlementDate: formatDate(ficcTrade?.settlementdate)
+      }
+    });
+  }, [trade, ficcTrade]);
+
+  useEffect(() => {
+    // Validate pairing criteria
+    const validatePairing = () => {
+      if (!trade || !ficcTrade) return;
+      
+      const synced = 
+        trade.cusip === ficcTrade.cusip &&
+        trade.tradedate === ficcTrade.tradedate &&
+        trade.settlementdate === ficcTrade.settlementdate &&
+        ((trade.transaction_type === 'BUY' && ficcTrade.transaction_type === 'SELL') ||
+         (trade.transaction_type === 'SELL' && ficcTrade.transaction_type === 'BUY'));
+
+      setIsProperlySynced(synced);
+
+      if (!synced) {
+        console.error('=== TRADE PAIRING MISMATCH ===', {
+          internalTrade: {
+            id: trade.id,
+            cusip: trade.cusip,
+            tradedate: trade.tradedate,
+            settlementdate: trade.settlementdate,
+            transaction_type: trade.transaction_type
+          },
+          ficcTrade: {
+            id: ficcTrade.id,
+            cusip: ficcTrade.cusip,
+            tradedate: ficcTrade.tradedate,
+            settlementdate: ficcTrade.settlementdate,
+            transaction_type: ficcTrade.transaction_type
+          },
+          mismatches: {
+            cusip: trade.cusip !== ficcTrade.cusip,
+            tradeDate: trade.tradedate !== ficcTrade.tradedate,
+            settlementDate: trade.settlementdate !== ficcTrade.settlementdate,
+            oppositeTypes: !((trade.transaction_type === 'BUY' && ficcTrade.transaction_type === 'SELL') ||
+                           (trade.transaction_type === 'SELL' && ficcTrade.transaction_type === 'BUY'))
+          }
+        });
+      }
+    };
+
+    validatePairing();
+  }, [trade, ficcTrade]);
+
+  useEffect(() => {
+    console.log('=== TRADE TYPE CHECK ===', {
+      recordType: trade?.recordType,
+      isAdvisory: trade?.recordType === 'advisory',
+      trade: {
+        id: trade?.id,
+        tradedate: trade?.tradedate,
+        settlementdate: trade?.settlementdate,
+        transaction_type: trade?.transaction_type
+      }
+    });
+  }, [trade]);
+
+  useEffect(() => {
+    console.log('=== TRADE COMPARISON DATE CHECK ===', {
+      parentTrade: {
+        id: trade?.id,
+        tradeDate: trade?.tradedate,
+        settlementDate: trade?.settlementdate
+      },
+      ficcTrade: {
+        id: ficcTrade?.id,
+        tradeDate: ficcTrade?.tradedate,
+        settlementDate: ficcTrade?.settlementdate
+      }
+    });
+  }, [trade, ficcTrade]);
+
+  useEffect(() => {
+    console.log('=== TRADE DATE VALIDATION ===', {
+      receivedDates: {
+        tradedate: trade?.tradedate,
+        settlementdate: trade?.settlementdate,
+        raw_trade: trade // Log the entire trade object
+      },
+      formattedDates: {
+        tradedate: formatDate(trade?.tradedate),
+        settlementdate: formatDate(trade?.settlementdate)
+      }
+    });
+  }, [trade]);
+
+  if (!trade) {
     return (
       <div className="expanded-row">
         <h3 className="comparison-title">TRADE COMPARISON</h3>
@@ -17,11 +263,8 @@ const TradeComparison = ({ trade, ficcTrade }) => {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        month: '2-digit',
-        day: '2-digit',
-        year: 'numeric'
-      });
+      const [year, month, day] = dateString.split('-');
+      return `${month}/${day}/${year}`;
     } catch {
       return 'N/A';
     }
@@ -60,7 +303,8 @@ const TradeComparison = ({ trade, ficcTrade }) => {
       case 'transaction_type':
         return false;
       case 'executing_firm':
-      case 'dtc_number':
+        return false;
+      case 'clearing_number':
         return false;
       default:
         return internal.toString() !== ficc.toString();
@@ -83,82 +327,84 @@ const TradeComparison = ({ trade, ficcTrade }) => {
   return (
     <div className="expanded-row">
       <h3 className="comparison-title">TRADE COMPARISON</h3>
+      {isAdvisory && (
+        <div className="advisory-notice">
+          Advisory Record - No matching internal trade found
+        </div>
+      )}
       <div className="comparison-table-wrapper">
         <table className="comparison-table">
           <thead>
             <tr>
-              <th>Field</th>
-              <th>Internal Trade</th>
-              <th>FICC Trade</th>
+              <th className="field-column">Field</th>
+              <th className="internal-column">Our Details</th>
+              <th className="counterparty-column">
+                {isAdvisory ? 'Advisory Details' : 'Counterparty Details'}
+              </th>
             </tr>
           </thead>
           <tbody>
-            {/* Primary Matching Fields */}
             <ComparisonRow 
               label="CUSIP"
               field="cusip"
-              internalValue={trade.cusip}
-              ficcValue={ficcTrade.cusip}
+              internalValue={ourDetails?.cusip}
+              ficcValue={counterpartyDetails?.cusip}
               formatter={(v) => v || 'N/A'}
             />
             <ComparisonRow 
               label="Trade Date"
-              field="trade_date"
-              internalValue={trade.trade_date}
-              ficcValue={ficcTrade.trade_date}
+              field="tradedate"
+              internalValue={ourDetails?.tradedate}
+              ficcValue={counterpartyDetails?.tradedate}
               formatter={formatDate}
             />
             <ComparisonRow 
               label="Settlement Date"
-              field="settlement_date"
-              internalValue={trade.settlement_date}
-              ficcValue={ficcTrade.settlement_date}
+              field="settlementdate"
+              internalValue={ourDetails?.settlementdate}
+              ficcValue={counterpartyDetails?.settlementdate}
               formatter={formatDate}
             />
             <ComparisonRow 
               label="Transaction Type"
               field="transaction_type"
-              internalValue={trade.transaction_type}
-              ficcValue={ficcTrade.transaction_type}
+              internalValue={ourDetails?.transaction_type}
+              ficcValue={counterpartyDetails?.transaction_type}
               formatter={(v) => v || 'N/A'}
             />
-
-            {/* Mandatory Matching Fields */}
             <ComparisonRow 
               label="Quantity"
               field="quantity"
-              internalValue={trade.quantity}
-              ficcValue={ficcTrade.quantity}
+              internalValue={ourDetails?.quantity}
+              ficcValue={counterpartyDetails?.quantity}
               formatter={formatQuantity}
             />
             <ComparisonRow 
               label="Price"
               field="price"
-              internalValue={trade.price}
-              ficcValue={ficcTrade.price}
+              internalValue={ourDetails?.price}
+              ficcValue={counterpartyDetails?.price}
               formatter={formatPrice}
             />
             <ComparisonRow 
               label="Net Money"
               field="net_money"
-              internalValue={trade.net_money}
-              ficcValue={ficcTrade.net_money}
+              internalValue={ourDetails?.net_money}
+              ficcValue={counterpartyDetails?.net_money}
               formatter={formatCurrency}
             />
-
-            {/* Additional Information */}
             <ComparisonRow 
               label="Executing Firm"
               field="executing_firm"
-              internalValue={trade.executing_firm}
-              ficcValue={ficcTrade.executing_firm}
+              internalValue={ourDetails?.submitting_member_executing_firm_customer_id}
+              ficcValue={counterpartyDetails?.contra_firm_executing_firm_customer_id}
               formatter={(v) => v || 'N/A'}
             />
             <ComparisonRow 
-              label="DTC Number"
-              field="dtc_number"
-              internalValue={trade.dtc_number}
-              ficcValue={ficcTrade.dtc_number}
+              label="Clearing Number"
+              field="clearing_number"
+              internalValue={ourDetails?.member_firm_id}
+              ficcValue={counterpartyDetails?.contra_firm_id}
               formatter={(v) => v || 'N/A'}
             />
           </tbody>
