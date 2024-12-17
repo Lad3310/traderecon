@@ -1,119 +1,60 @@
 import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } from '@aws-sdk/client-sqs';
+import { AWS_CONFIG } from '../config/aws';
 
 class SQSService {
   constructor() {
+    this.sqs = null;
+    this.queueUrl = null;
     this.initializeSQS();
   }
 
   initializeSQS() {
     try {
-      const region = process.env.REACT_APP_AWS_REGION;
-      const accessKeyId = process.env.REACT_APP_AWS_ACCESS_KEY_ID;
-      const secretAccessKey = process.env.REACT_APP_AWS_SECRET_ACCESS_KEY;
-      const queueUrl = process.env.REACT_APP_SQS_QUEUE_URL;
-      
-      // Debug configuration
-      console.log('AWS Configuration Check:', {
-        region: region || 'MISSING',
-        accessKeyId: accessKeyId ? `${accessKeyId.substring(0, 5)}...` : 'MISSING',
-        secretKeyExists: !!secretAccessKey,
-        queueUrl: queueUrl || 'MISSING'
-      });
-
-      if (!region || !accessKeyId || !secretAccessKey || !queueUrl) {
-        const missing = [];
-        if (!region) missing.push('AWS_REGION');
-        if (!accessKeyId) missing.push('AWS_ACCESS_KEY_ID');
-        if (!secretAccessKey) missing.push('AWS_SECRET_ACCESS_KEY');
-        if (!queueUrl) missing.push('SQS_QUEUE_URL');
-        
-        throw new Error(`Missing required AWS configuration: ${missing.join(', ')}`);
+      if (!AWS_CONFIG.region || !AWS_CONFIG.credentials.accessKeyId || 
+          !AWS_CONFIG.credentials.secretAccessKey || !AWS_CONFIG.sqs.queueUrl) {
+        console.warn('AWS configuration incomplete - SQS features will be disabled');
+        return;
       }
 
       this.sqs = new SQSClient({
-        region,
-        credentials: {
-          accessKeyId,
-          secretAccessKey
-        }
+        region: AWS_CONFIG.region,
+        credentials: AWS_CONFIG.credentials
       });
       
-      this.queueUrl = queueUrl;
+      this.queueUrl = AWS_CONFIG.sqs.queueUrl;
       
-      console.log('✅ SQS Service successfully initialized:', {
-        region,
-        queueUrl,
-        clientConfigured: !!this.sqs
-      });
-
-      // Test the connection
-      this.testConnection();
-
+      console.log('✅ SQS Service initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize SQS:', {
-        error: error.message,
-        stack: error.stack
-      });
-      throw error;
-    }
-  }
-
-  async testConnection() {
-    try {
-      const command = new ReceiveMessageCommand({
-        QueueUrl: this.queueUrl,
-        MaxNumberOfMessages: 1,
-        WaitTimeSeconds: 1
-      });
-
-      const response = await this.sqs.send(command);
-      console.log('✅ SQS Connection test successful:', {
-        queueAccessible: true,
-        responseReceived: !!response
-      });
-    } catch (error) {
-      console.error('❌ SQS Connection test failed:', {
-        error: error.message,
-        code: error.Code,
-        type: error.$metadata?.httpStatusCode
-      });
-      throw error;
+      console.warn('Failed to initialize SQS:', error);
     }
   }
 
   async receiveMessages(maxMessages = 10) {
     if (!this.sqs || !this.queueUrl) {
-      console.error('SQS not properly initialized');
+      console.warn('SQS not initialized - skipping message receive');
       return [];
     }
 
     const command = new ReceiveMessageCommand({
       QueueUrl: this.queueUrl,
       MaxNumberOfMessages: maxMessages,
-      WaitTimeSeconds: 5, // Reduced from 20 to 5 seconds
+      WaitTimeSeconds: 5,
       AttributeNames: ['All'],
       MessageAttributeNames: ['All']
     });
 
     try {
-      console.log('Receiving messages from queue:', this.queueUrl);
       const response = await this.sqs.send(command);
-      console.log('Received response:', response);
       return response.Messages || [];
     } catch (error) {
-      console.error('Error receiving messages:', {
-        error,
-        errorName: error.name,
-        errorMessage: error.message,
-        errorStack: error.stack
-      });
+      console.error('Error receiving messages:', error);
       return [];
     }
   }
 
   async deleteMessage(receiptHandle) {
     if (!this.sqs || !this.queueUrl) {
-      console.error('SQS not properly initialized');
+      console.warn('SQS not initialized - skipping message delete');
       return;
     }
 
@@ -124,16 +65,13 @@ class SQSService {
 
     try {
       await this.sqs.send(command);
-      console.log('Successfully deleted message:', receiptHandle);
+      console.log('Message deleted:', receiptHandle);
     } catch (error) {
-      console.error('Error deleting message:', {
-        error,
-        receiptHandle
-      });
-      throw error;
+      console.error('Error deleting message:', error);
     }
   }
 }
 
+// Create and export a single instance
 const sqsService = new SQSService();
 export default sqsService; 

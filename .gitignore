@@ -34,3 +34,12 @@ node_modules/
 .env
 .env.local
 .env.*.local
+
+# SQL files
+*.sql
+/Users/joelaird/Downloads/trades_rows-3.sql
+/Users/joelaird/Downloads/ficc_messages_rows-2.sql
+
+# System files
+.DS_Store
+EOL
