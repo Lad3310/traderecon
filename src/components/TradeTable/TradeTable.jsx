@@ -57,25 +57,25 @@ const TradeTable = () => {
     e.stopPropagation();
     e.preventDefault();
     
-    const dtcNumber = trade.transaction_type === 'BUY' 
-      ? trade.contra_executing_firm  // Seller's DTC for buy trades
-      : trade.executing_firm;        // Buyer's DTC for sell trades
+    const ficcNumber = trade.transaction_type === 'BUY' 
+      ? trade.contra_executing_firm  // Seller's FICC for buy trades
+      : trade.executing_firm;        // Buyer's FICC for sell trades
     
-    if (!dtcNumber) {
+    if (!ficcNumber) {
       setAlert({
         show: true,
-        message: 'No counterparty DTC number found for this trade.',
+        message: 'No counterparty FICC number found for this trade.',
         type: 'error'
       });
       return;
     }
 
-    const contact = contacts.find(c => c.dtc_number === dtcNumber);
+    const contact = contacts.find(c => c.ficc_number === ficcNumber);
 
     if (!contact) {
       setAlert({
         show: true,
-        message: `No contact found for DTC ${dtcNumber}. Please add contact information in the Contacts page.`,
+        message: `No contact found for FICC ${ficcNumber}. Please add contact information in the Contacts page.`,
         type: 'error'
       });
       return;
@@ -84,7 +84,7 @@ const TradeTable = () => {
     if (!contact.email) {
       setAlert({
         show: true,
-        message: `Contact exists for DTC ${dtcNumber} but no email address is set. Please update contact information.`,
+        message: `Contact exists for FICC ${ficcNumber} but no email address is set. Please update contact information.`,
         type: 'warning'
       });
       return;
@@ -101,7 +101,7 @@ Settlement Date: ${formatDate(trade.settlementdate)}
 Security: ${trade.cusip || 'N/A'}
 Price: ${trade.price ? trade.price.toFixed(2) : 'N/A'}
 Quantity: ${trade.quantity ? trade.quantity.toLocaleString() : 'N/A'}
-DTC Number: ${dtcNumber}
+FICC Number: ${ficcNumber}
 
 Please confirm if these details match your records.
 
@@ -175,15 +175,16 @@ Trade Operations
         <table className="trade-table">
           <thead>
             <tr>
-              <th className="center"></th>
-              <th className="left">Type</th>
+              <th></th>
+              <th className="center">Type</th>
               <th className="center">Trade Date</th>
               <th className="center">Settlement Date</th>
               <th className="center">Age</th>
-              <th className="left">CUSIP</th>
-              <th className="right">Quantity</th>
-              <th className="right">Net Money</th>
+              <th className="center">CUSIP</th>
+              <th className="center">Quantity</th>
+              <th className="center">Net Money</th>
               <th className="center">Side</th>
+              <th className="center">Contra</th>
               <th className="center">Status</th>
               <th className="center">Actions</th>
             </tr>

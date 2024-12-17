@@ -1,10 +1,17 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import ComparisonStatus from './ComparisonStatus'
 import TradeComparison from '../TradeComparison'
 import { MdEmail } from 'react-icons/md';
 import { FaEnvelope } from 'react-icons/fa';
+import { calculateBusinessDays } from '../../utils/dateUtils';
+import { supabase } from '../../config/supabaseClient';
+import AlertDialog from '../common/AlertDialog';
 
 const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick }) => {
+  const [contactEmail, setContactEmail] = useState(null);
+  const [contactError, setContactError] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ show: false, message: '', type: 'error' });
+
   useEffect(() => {
     console.log('=== TRADE ROW DATA FLOW ===', {
       rowDates: {
@@ -111,6 +118,17 @@ const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick })
     );
   };
 
+  const getContraValue = () => {
+    if (trade.recordType === 'advisory') {
+      return trade.contra_firm_id || 'N/A';
+    }
+    return trade.member_firm_id || 'N/A';
+  };
+
+  const getAge = () => {
+    return calculateBusinessDays(trade.settlementdate);
+  };
+
   useEffect(() => {
     if (isExpanded) {
       console.log('=== ROW EXPANSION DATA ===');
@@ -130,9 +148,75 @@ const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick })
     }
   }, [isExpanded, trade]);
 
+  const age = getAge();
+
+  const handleEmailClick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const ficcNumber = getContraValue();
+
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('email, counterparty_name')
+        .eq('ficc', ficcNumber)
+        .single();
+
+      if (error || !data) {
+        setAlertDialog({
+          show: true,
+          message: `No contact found for FICC ${ficcNumber}. Please add contact information in the Contacts page.`,
+          type: 'error'
+        });
+        return;
+      }
+
+      const subject = `Trade Reconciliation - ${trade.cusip} - ${formatDate(trade.tradedate)}`;
+      const body = `
+Hello,
+
+Please verify the following trade details:
+
+Trade Date: ${formatDate(trade.tradedate)}
+Settlement Date: ${formatDate(trade.settlementdate)}
+Security: ${trade.cusip}
+Price: ${trade.price ? trade.price.toFixed(2) : 'N/A'}
+Quantity: ${trade.quantity ? trade.quantity.toLocaleString() : 'N/A'}
+FICC Number: ${ficcNumber}
+
+Please confirm if these details match your records.
+
+Best regards,
+Trade Operations
+`.trim();
+
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = `mailto:${data.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      
+      // Simulate click and remove the element
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (err) {
+      console.error('Error handling email click:', err);
+      setAlertDialog({
+        show: true,
+        message: 'Error finding contact information. Please try again.',
+        type: 'error'
+      });
+    }
+  };
+
   return (
     <React.Fragment>
-      <tr className={`main-row ${isExpanded ? 'expanded' : ''} ${className}`}>
+      <tr 
+        className={`main-row ${isExpanded ? 'expanded' : ''} ${className}`}
+        data-age={age}
+      >
         <td className="center">
           <button className="expand-button" onClick={onExpandClick}>
             {isExpanded ? '▼' : '▶'}
@@ -141,25 +225,32 @@ const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick })
         <td className="left">{getTypeDisplay()}</td>
         <td className="center">{formatDate(trade.tradedate)}</td>
         <td className="center">{formatDate(trade.settlementdate)}</td>
-        <td className="center">{trade.age}</td>
+        <td className="center">
+          {age > 0 ? <span>{age}</span> : age}
+        </td>
         <td className="left">{trade.cusip}</td>
         <td className="right">{formatQuantity(trade.quantity)}</td>
         <td className="right">{formatMoney(trade.net_money)}</td>
         <td className="center">{trade.transaction_type}</td>
-        <td className="center">
+        <td className="center">{getContraValue()}</td>
+        <td className="right">
           <span className={getStatusClass(trade.comparison_status)}>
             {getDisplayStatus(trade.comparison_status)}
           </span>
         </td>
-        <td className="center">
-          <button className="email-button" onClick={(e) => onEmailClick(trade, e)}>
+        <td className="right">
+          <button 
+            className="email-button" 
+            onClick={handleEmailClick}
+            title="Send reconciliation email"
+          >
             <FaEnvelope size={24} />
           </button>
         </td>
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan="11">
+          <td colSpan="12">
             <TradeComparison 
               key={`comparison-${trade.id}`}
               trade={{
@@ -171,6 +262,13 @@ const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick })
             />
           </td>
         </tr>
+      )}
+      {alertDialog.show && (
+        <AlertDialog
+          message={alertDialog.message}
+          type={alertDialog.type}
+          onClose={() => setAlertDialog({ show: false, message: '', type: 'error' })}
+        />
       )}
     </React.Fragment>
   )

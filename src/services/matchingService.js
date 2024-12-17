@@ -281,7 +281,7 @@ export const getTradeComparison = async (tradeId) => {
     transaction_type: trade.transaction_type,
     executing_firm: trade.executing_firm,
     contra_executing_firm: trade.contra_executing_firm,
-    dtc_number: trade.dtc_number
+    ficc_number: trade.ficc_number
   };
 
   // Parse FICC message content if available
@@ -300,7 +300,7 @@ export const getTradeComparison = async (tradeId) => {
     transaction_type: trade.ficc_transaction_type,
     executing_firm: ficcMessage?.CONFDET?.['95P']?.['SELL'] || trade.ficc_executing_firm,
     contra_executing_firm: ficcMessage?.CONFDET?.['95P']?.['BUYR'] || trade.ficc_contra_executing_firm,
-    dtc_number: ficcMessage?.CONFDET?.['95R']?.['SELL'] || trade.ficc_dtc_number
+    ficc_number: ficcMessage?.CONFDET?.['95R']?.['SELL'] || trade.ficc_number
   };
 
   return {

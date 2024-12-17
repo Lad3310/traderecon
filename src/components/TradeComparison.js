@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import './TradeComparison.css';
 import { FIRM_IDENTIFIERS } from '../constants/firmIdentifiers';
+import { compareTrades } from '../services/tradeComparison';
 
 // Custom tooltip component
 const CustomTooltip = ({ children, title }) => {
@@ -249,6 +250,17 @@ const TradeComparison = ({ trade, ficcTrade }) => {
     });
   }, [trade]);
 
+  useEffect(() => {
+    // Update the parent trade object with the clearing number information
+    if (trade && !trade.member_firm_id) {
+      if (isAdvisory) {
+        trade.contra_firm_id = counterpartyDetails?.contra_firm_id;
+      } else {
+        trade.member_firm_id = ourDetails?.member_firm_id;
+      }
+    }
+  }, [trade, ficcTrade]);
+
   if (!trade) {
     return (
       <div className="expanded-row">
@@ -311,7 +323,7 @@ const TradeComparison = ({ trade, ficcTrade }) => {
     }
   };
 
-  const ComparisonRow = ({ label, field, internalValue, ficcValue, formatter }) => {
+  const ComparisonRow = React.memo(({ label, field, internalValue, ficcValue, formatter }) => {
     const different = isDifferent(field, internalValue, ficcValue);
     const rowClass = different ? 'comparison-row different' : 'comparison-row';
     
@@ -322,6 +334,19 @@ const TradeComparison = ({ trade, ficcTrade }) => {
         <td className="ficc-value">{formatter(ficcValue)}</td>
       </tr>
     );
+  });
+
+  // Memoize expensive calculations
+  const useMemoizedComparison = (trade, ficcTrade) => {
+    return useMemo(async () => {
+      if (!trade || !ficcTrade) return null;
+      try {
+        return await compareTrades(trade, ficcTrade);
+      } catch (error) {
+        console.error('Error comparing trades:', error);
+        return null;
+      }
+    }, [trade?.id, ficcTrade?.id]);
   };
 
   return (

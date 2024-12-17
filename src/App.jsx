@@ -10,17 +10,13 @@ const App = () => {
   const [activeTab, setActiveTab] = useState('trades')
 
   useEffect(() => {
-    // Start processing messages when app initializes
     messageProcessorService.startProcessing();
-
-    // Clean up when component unmounts
     return () => {
       console.log('App unmounting - stopping message processor...');
       messageProcessorService.stopProcessing();
     };
   }, []);
 
-  // Add window unload handler
   useEffect(() => {
     const handleUnload = () => {
       console.log('Window unloading - stopping message processor...');
@@ -31,6 +27,25 @@ const App = () => {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'trades':
+        return (
+          <div className="section">
+            <TradeTable />
+          </div>
+        );
+      case 'contacts':
+        return (
+          <div className="section">
+            <Contacts />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="app">
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -40,19 +55,7 @@ const App = () => {
       )}
       
       <main>
-        {activeTab === 'trades' && (
-          <div className="section">
-            <h2>Trade Reconciliation Dashboard</h2>
-            <TradeTable />
-          </div>
-        )}
-        
-        {activeTab === 'contacts' && (
-          <div className="section">
-            <h2>Contacts Management</h2>
-            <Contacts />
-          </div>
-        )}
+        {renderContent()}
       </main>
     </div>
   )

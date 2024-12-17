@@ -46,11 +46,12 @@ class FICCSimulator {
   async generateMT518Message() {
     try {
       console.log('Fetching unmatched trades...');
-      // First, get unmatched trades from your trades table
+      // Get unmatched trades from trades table
       const { data: unmatchedTrades, error: tradesError } = await supabase
         .from('trades')
         .select('*')
-        .eq('comparison_status', 'PENDING')
+        .eq('comparison_status', 'UNMATCHED')
+        .is('ficc_status', null)
         .limit(1);
 
       if (tradesError) {
@@ -58,7 +59,7 @@ class FICCSimulator {
         throw tradesError;
       }
       
-      console.log('Unmatched trades result:', unmatchedTrades);
+      console.log('Unmatched trades found:', unmatchedTrades?.length || 0);
 
       if (!unmatchedTrades?.length) {
         console.log('No unmatched trades to simulate messages for');

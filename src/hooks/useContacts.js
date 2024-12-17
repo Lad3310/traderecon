@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase } from '../lib/supabaseClient';
 
 export const useContacts = () => {
   const [contacts, setContacts] = useState([]);
@@ -9,16 +9,20 @@ export const useContacts = () => {
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      const { data, error: supabaseError } = await supabase
+      const { data, error } = await supabase
         .from('contacts')
         .select('*')
         .order('counterparty_name');
 
-      if (supabaseError) throw supabaseError;
+      if (error) throw error;
+      
+      console.log('Fetched contacts:', data);
       setContacts(data || []);
+      setError(null);
     } catch (err) {
       console.error('Error fetching contacts:', err);
       setError(err.message);
+      setContacts([]);
     } finally {
       setLoading(false);
     }
@@ -26,56 +30,56 @@ export const useContacts = () => {
 
   const addContact = async (newContact) => {
     try {
-      const { data, error: supabaseError } = await supabase
+      const { data, error } = await supabase
         .from('contacts')
-        .insert([newContact])
-        .select();
+        .insert([{
+          counterparty_name: newContact.counterparty_name,
+          email: newContact.email,
+          mpid: newContact.mpid,
+          ficc: newContact.ficc
+        }])
+        .select()
+        .single();
 
-      if (supabaseError) throw supabaseError;
-      
-      setContacts(prev => [...prev, data[0]]);
-      return { success: true };
+      if (error) throw error;
+      await fetchContacts();
+      return { success: true, data };
     } catch (err) {
       console.error('Error adding contact:', err);
       return { success: false, error: err.message };
     }
   };
 
-  const deleteContact = async (id) => {
+  const updateContact = async (contact) => {
     try {
-      const { error: supabaseError } = await supabase
+      const { data, error } = await supabase
         .from('contacts')
-        .delete()
-        .eq('id', id);
+        .update(contact)
+        .eq('id', contact.id)
+        .select()
+        .single();
 
-      if (supabaseError) throw supabaseError;
-      
-      setContacts(prev => prev.filter(contact => contact.id !== id));
-      return { success: true };
+      if (error) throw error;
+      await fetchContacts();
+      return { success: true, data };
     } catch (err) {
-      console.error('Error deleting contact:', err);
+      console.error('Error updating contact:', err);
       return { success: false, error: err.message };
     }
   };
 
-  const updateContact = async (updatedContact) => {
+  const deleteContact = async (id) => {
     try {
-      const { id, ...contactDataToUpdate } = updatedContact;
-
-      const { data, error: supabaseError } = await supabase
+      const { error } = await supabase
         .from('contacts')
-        .update(contactDataToUpdate)
-        .eq('id', id)
-        .select();
+        .delete()
+        .eq('id', id);
 
-      if (supabaseError) throw supabaseError;
-      
-      setContacts(prev => prev.map(contact => 
-        contact.id === id ? data[0] : contact
-      ));
+      if (error) throw error;
+      await fetchContacts();
       return { success: true };
     } catch (err) {
-      console.error('Error updating contact:', err);
+      console.error('Error deleting contact:', err);
       return { success: false, error: err.message };
     }
   };
@@ -89,8 +93,8 @@ export const useContacts = () => {
     loading,
     error,
     addContact,
-    deleteContact,
     updateContact,
-    refreshContacts: fetchContacts
+    deleteContact,
+    refetch: fetchContacts
   };
 }; 

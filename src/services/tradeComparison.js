@@ -1,97 +1,105 @@
 import { supabase } from '../lib/supabaseClient';
 
-export const compareTrades = (internalTrade, ficcTrade) => {
-  if (!internalTrade || !ficcTrade) return null;
-
-  const discrepancies = {
-    isPaired: true,
-    isMatched: false,
-    differences: [],
-    details: []
-  };
-
-  // Core matching fields (must match exactly)
-  const coreFieldsMatch = 
-    internalTrade.cusip === ficcTrade.cusip &&
-    internalTrade.tradedate === ficcTrade.tradedate &&
-    internalTrade.settlementdate === ficcTrade.settlementdate &&
-    internalTrade.quantity === ficcTrade.quantity;
-
-  // Check firm identifiers match in opposite directions
-  const firmIdentifiersMatch = 
-    // Our submitting firm should match their contra firm
-    internalTrade.submitting_member_executing_firm_customer_id === ficcTrade.contra_firm_executing_firm_customer_id &&
-    internalTrade.member_firm_id === ficcTrade.contra_firm_id &&
-    // Their submitting firm should match our contra firm
-    internalTrade.contra_firm_executing_firm_customer_id === ficcTrade.submitting_member_executing_firm_customer_id &&
-    internalTrade.contra_firm_id === ficcTrade.member_firm_id;
-
-  // Transaction types must be opposite
-  const transactionTypesMatch = 
-    (internalTrade.transaction_type === 'BUY' && ficcTrade.transaction_type === 'SELL') ||
-    (internalTrade.transaction_type === 'SELL' && ficcTrade.transaction_type === 'BUY');
-
-  // Price comparison with tolerance
-  const priceMatch = Math.abs(internalTrade.price - ficcTrade.price) <= 0.0001;
-  
-  // Net money comparison with tolerance
-  const netMoneyMatch = Math.abs(internalTrade.net_money - ficcTrade.net_money) <= 0.01;
-
-  // Record differences
-  if (!firmIdentifiersMatch) {
-    discrepancies.differences.push({
-      field: 'firm_identifiers',
-      internal: {
-        submitting: `${internalTrade.submitting_member_executing_firm_customer_id}/${internalTrade.member_firm_id}`,
-        contra: `${internalTrade.contra_firm_executing_firm_customer_id}/${internalTrade.contra_firm_id}`
-      },
-      ficc: {
-        submitting: `${ficcTrade.submitting_member_executing_firm_customer_id}/${ficcTrade.member_firm_id}`,
-        contra: `${ficcTrade.contra_firm_executing_firm_customer_id}/${ficcTrade.contra_firm_id}`
-      }
-    });
-  }
-
-  if (!priceMatch) {
-    discrepancies.differences.push({
-      field: 'price',
-      internal: internalTrade.price,
-      ficc: ficcTrade.price
-    });
-  }
-
-  if (!netMoneyMatch) {
-    discrepancies.differences.push({
-      field: 'net_money',
-      internal: internalTrade.net_money,
-      ficc: ficcTrade.net_money
-    });
-  }
-
-  // Set match status
-  discrepancies.isPaired = coreFieldsMatch && firmIdentifiersMatch && transactionTypesMatch;
-  discrepancies.isMatched = discrepancies.isPaired && priceMatch && netMoneyMatch;
-
-  // Update the trade_comparisons table
-  const updateComparison = async () => {
-    const { error } = await supabase
-      .from('trade_comparisons')
-      .upsert({
-        trade_id: internalTrade.id,
-        ficc_message_id: ficcTrade.id,
-        is_paired: true,
-        is_matched: discrepancies.isMatched,
-        comparison_status: discrepancies.isMatched ? 'MATCHED' : 'UNMATCHED',
-        differences: discrepancies.differences
-      });
-
-    if (error) {
-      console.error('Error updating trade comparison:', error);
+export const compareTrades = async (internalTrade, ficcTrade) => {
+  try {
+    if (!internalTrade || !ficcTrade) {
+      throw new Error('Missing trade data for comparison');
     }
-  };
+    
+    const discrepancies = {
+      isPaired: true,
+      isMatched: false,
+      differences: [],
+      details: []
+    };
 
-  updateComparison();
-  return discrepancies;
+    // Core matching fields (must match exactly)
+    const coreFieldsMatch = 
+      internalTrade.cusip === ficcTrade.cusip &&
+      internalTrade.tradedate === ficcTrade.tradedate &&
+      internalTrade.settlementdate === ficcTrade.settlementdate &&
+      internalTrade.quantity === ficcTrade.quantity;
+
+    // Check firm identifiers match in opposite directions
+    const firmIdentifiersMatch = 
+      // Our submitting firm should match their contra firm
+      internalTrade.submitting_member_executing_firm_customer_id === ficcTrade.contra_firm_executing_firm_customer_id &&
+      internalTrade.member_firm_id === ficcTrade.contra_firm_id &&
+      // Their submitting firm should match our contra firm
+      internalTrade.contra_firm_executing_firm_customer_id === ficcTrade.submitting_member_executing_firm_customer_id &&
+      internalTrade.contra_firm_id === ficcTrade.member_firm_id;
+
+    // Transaction types must be opposite
+    const transactionTypesMatch = 
+      (internalTrade.transaction_type === 'BUY' && ficcTrade.transaction_type === 'SELL') ||
+      (internalTrade.transaction_type === 'SELL' && ficcTrade.transaction_type === 'BUY');
+
+    // Price comparison with tolerance
+    const priceMatch = Math.abs(internalTrade.price - ficcTrade.price) <= 0.0001;
+    
+    // Net money comparison with tolerance
+    const netMoneyMatch = Math.abs(internalTrade.net_money - ficcTrade.net_money) <= 0.01;
+
+    // Record differences
+    if (!firmIdentifiersMatch) {
+      discrepancies.differences.push({
+        field: 'firm_identifiers',
+        internal: {
+          submitting: `${internalTrade.submitting_member_executing_firm_customer_id}/${internalTrade.member_firm_id}`,
+          contra: `${internalTrade.contra_firm_executing_firm_customer_id}/${internalTrade.contra_firm_id}`
+        },
+        ficc: {
+          submitting: `${ficcTrade.submitting_member_executing_firm_customer_id}/${ficcTrade.member_firm_id}`,
+          contra: `${ficcTrade.contra_firm_executing_firm_customer_id}/${ficcTrade.contra_firm_id}`
+        }
+      });
+    }
+
+    if (!priceMatch) {
+      discrepancies.differences.push({
+        field: 'price',
+        internal: internalTrade.price,
+        ficc: ficcTrade.price
+      });
+    }
+
+    if (!netMoneyMatch) {
+      discrepancies.differences.push({
+        field: 'net_money',
+        internal: internalTrade.net_money,
+        ficc: ficcTrade.net_money
+      });
+    }
+
+    // Set match status
+    discrepancies.isPaired = coreFieldsMatch && firmIdentifiersMatch && transactionTypesMatch;
+    discrepancies.isMatched = discrepancies.isPaired && priceMatch && netMoneyMatch;
+
+    // Update the trade_comparisons table
+    const updateComparison = async () => {
+      const { error } = await supabase
+        .from('trade_comparisons')
+        .upsert({
+          trade_id: internalTrade.id,
+          ficc_message_id: ficcTrade.id,
+          is_paired: true,
+          is_matched: discrepancies.isMatched,
+          comparison_status: discrepancies.isMatched ? 'MATCHED' : 'UNMATCHED',
+          differences: discrepancies.differences
+        });
+
+      if (error) {
+        console.error('Error updating trade comparison:', error);
+      }
+    };
+
+    updateComparison();
+    return discrepancies;
+  } catch (error) {
+    console.error('Trade comparison failed:', error);
+    // Consider adding error reporting service
+    throw error;
+  }
 };
 
 export const findMatchingTrade = async (ficcMessage) => {
