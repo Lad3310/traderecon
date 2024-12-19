@@ -8,12 +8,25 @@ section {
   box-sizing: border-box;
 }
 
+/* Add styles for the main container */
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 1728px;  /* Match the main width from screenshot */
+  margin: 0 auto;
+  padding: 32px;
+  box-sizing: border-box;
+}
+
 .trade-table-container {
-  width: 100%;
-  margin: 0;
-  padding: 0 0.5rem;
+  width: 1664px;
+  margin: 32px 0;  /* Change from auto to 0 since parent handles centering */
+  padding: 32px;
   box-sizing: border-box;
   background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .table-wrapper {
@@ -22,6 +35,16 @@ section {
   padding: 0;
   overflow-x: auto;
   position: relative;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.table-wrapper thead {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 1;
 }
 
 .trade-table {
@@ -253,14 +276,13 @@ section {
 
 /* Add/Update these styles */
 .filters-section {
+  width: 100%;
+  margin: 0 0 20px 0;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
   gap: 1rem;
-  margin: 1rem 0;
-  padding: 1rem;
-  width: 100%;
 }
 
 .filter-group {
@@ -476,5 +498,23 @@ section {
   font-size: 0.875rem;
   background-color: #fee2e2;  /* Light red background */
   color: #991b1b;  /* Dark red text */
+}
+
+/* Style the scrollbar */
+.table-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
   

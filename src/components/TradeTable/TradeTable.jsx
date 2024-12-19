@@ -179,7 +179,7 @@ Trade Operations
           </label>
         </div>
       </div>
-      <div className="table-wrapper">
+      <div className="table-wrapper" style={{ maxHeight: '600px', overflowY: 'auto' }}>
         <table className="trade-table">
           <thead>
             <tr>
@@ -198,11 +198,11 @@ Trade Operations
             </tr>
           </thead>
           <tbody>
-            {filteredTrades.map(record => (
+            {filteredTrades.map((record, index) => (
               <TradeRow 
                 key={record.id}
                 trade={record}
-                className={getRowClassName(record)}
+                className={`${getRowClassName(record)} ${index < 12 ? 'initial-row' : ''}`}
                 onEmailClick={handleEmailClick}
                 isExpanded={expandedRowId === record.id}
                 onExpandClick={() => handleExpandClick(record.id)}

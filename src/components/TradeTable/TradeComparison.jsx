@@ -69,7 +69,7 @@ const TradeComparison = ({ trade, ficcTrade }) => {
   };
 
   const isDifferent = (field) => {
-    if (!comparison.ficc) return false;
+    if (!ficcTrade || !comparison.ficc) return false;
     
     const internal = comparison.internal[field];
     const ficc = comparison.ficc[field];
@@ -84,6 +84,14 @@ const TradeComparison = ({ trade, ficcTrade }) => {
     }
     
     return internal.toString() !== ficc.toString();
+  };
+
+  const getCounterpartyValue = (field, formatter = (val) => val) => {
+    if (ficcTrade || trade.recordType === 'advisory') {
+      const value = comparison.ficc?.[field];
+      return value !== undefined && value !== null ? formatter(value) : 'N/A';
+    }
+    return 'N/A';
   };
 
   if (!trade) {
@@ -112,47 +120,47 @@ const TradeComparison = ({ trade, ficcTrade }) => {
           <tr>
             <td>CUSIP</td>
             <td>{trade.recordType === 'advisory' ? '' : comparison.internal.cusip}</td>
-            <td>{comparison.ficc?.cusip || 'N/A'}</td>
+            <td>{getCounterpartyValue('cusip')}</td>
           </tr>
           <tr>
             <td>Trade Date</td>
             <td>{trade.recordType === 'advisory' ? '' : formatDate(comparison.internal.trade_date)}</td>
-            <td>{formatDate(comparison.ficc?.trade_date)}</td>
+            <td>{getCounterpartyValue('trade_date', formatDate)}</td>
           </tr>
           <tr>
             <td>Settlement Date</td>
             <td>{trade.recordType === 'advisory' ? '' : formatDate(comparison.internal.settlement_date)}</td>
-            <td>{formatDate(comparison.ficc?.settlement_date)}</td>
+            <td>{getCounterpartyValue('settlement_date', formatDate)}</td>
           </tr>
           <tr>
             <td>Transaction Type</td>
             <td>{trade.recordType === 'advisory' ? '' : comparison.internal.transaction_type}</td>
-            <td>{comparison.ficc?.transaction_type || 'N/A'}</td>
+            <td>{getCounterpartyValue('transaction_type')}</td>
           </tr>
           <tr>
             <td>Quantity</td>
             <td>{trade.recordType === 'advisory' ? '' : formatQuantity(comparison.internal.quantity)}</td>
-            <td>{formatQuantity(comparison.ficc?.quantity)}</td>
+            <td>{getCounterpartyValue('quantity', formatQuantity)}</td>
           </tr>
           <tr className={isDifferent('price') ? 'different' : ''}>
             <td>Price</td>
             <td>{trade.recordType === 'advisory' ? '' : formatPrice(comparison.internal.price)}</td>
-            <td>{formatPrice(comparison.ficc?.price)}</td>
+            <td>{getCounterpartyValue('price', formatPrice)}</td>
           </tr>
           <tr>
             <td>Net Money</td>
             <td>{trade.recordType === 'advisory' ? '' : formatMoney(comparison.internal.net_money)}</td>
-            <td>{formatMoney(comparison.ficc?.net_money)}</td>
+            <td>{getCounterpartyValue('net_money', formatMoney)}</td>
           </tr>
           <tr>
             <td>Executing Firm</td>
             <td>{trade.recordType === 'advisory' ? '' : (comparison.internal.executing_firm || 'N/A')}</td>
-            <td>{comparison.ficc?.executing_firm || 'N/A'}</td>
+            <td>{getCounterpartyValue('executing_firm')}</td>
           </tr>
           <tr>
             <td>Clearing Number</td>
             <td>{trade.recordType === 'advisory' ? '' : (comparison.internal.clearing_number || 'N/A')}</td>
-            <td>{comparison.ficc?.clearing_number || 'N/A'}</td>
+            <td>{getCounterpartyValue('clearing_number')}</td>
           </tr>
         </tbody>
       </table>

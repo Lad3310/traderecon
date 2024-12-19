@@ -80,27 +80,16 @@
   background-color: #f8fafc;
 }
 
-/* Keep different highlighting on hover */
+/* Remove hover effects for different rows only when they are actually different */
 .comparison-table tr.different:hover {
   background-color: #fee2e2;
 }
 
-/* Make sure header stays white */
-.comparison-table thead tr:hover {
-  background-color: #f8fafc;
-}
-
-/* Fix the hover state for different rows */
-.comparison-table tr.different:hover {
-  background-color: #fee2e2;
-}
-
-/* Keep TD red background on hover */
 .comparison-table tr.different:hover td {
   background-color: #fee2e2;
 }
 
-/* Remove the hover effect for rows with differences */
+/* Keep the regular hover effect for all other rows */
 .comparison-table tbody tr:hover {
   background-color: #f8fafc;
 }
