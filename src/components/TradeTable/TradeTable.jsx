@@ -17,7 +17,7 @@ const TradeTable = () => {
     cusip: '',
     dateRange: null,
     showBreaksOnly: false,
-    counterparty: '',
+    contra: '',
     settlementStatus: ''
   })
   const [alert, setAlert] = useState({ show: false, message: '', type: '' })
@@ -46,9 +46,17 @@ const TradeTable = () => {
   if (error) return <ErrorMessage message={error.message} />
 
   const filteredTrades = trades.filter(trade => {
+    console.log('Trade:', {
+      id: trade.id,
+      contra_firm_id: trade.contra_firm_id,
+      contraFilter: filters.contra
+    });
+    
     if (filters.showBreaksOnly && trade.comparison_status === 'MATCHED') return false
-    if (filters.cusip && !trade.cusip.toLowerCase().includes(filters.cusip.toLowerCase())) return false
-    if (filters.counterparty && !trade.counterparty.toLowerCase().includes(filters.counterparty.toLowerCase())) return false
+    const matchesCusip = !filters.cusip || 
+      (trade.cusip && trade.cusip.toLowerCase().includes(filters.cusip.toLowerCase()));
+    if (!matchesCusip) return false
+    if (filters.contra && !trade.contra_firm_id?.toString().toLowerCase().includes(filters.contra.toLowerCase())) return false
     if (filters.settlementStatus && trade.settlement_status !== filters.settlementStatus) return false
     return true
   })
@@ -145,14 +153,14 @@ Trade Operations
         </div>
 
         <div className="filter-group">
-          <label>Counterparty</label>
+          <label>Contra</label>
           <input
             type="text"
-            placeholder="Filter by counterparty..."
-            value={filters.counterparty}
+            placeholder="Filter by contra..."
+            value={filters.contra}
             onChange={(e) => setFilters(prev => ({
               ...prev,
-              counterparty: e.target.value
+              contra: e.target.value
             }))}
           />
         </div>

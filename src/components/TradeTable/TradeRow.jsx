@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import ComparisonStatus from './ComparisonStatus'
-import TradeComparison from '../TradeComparison'
+import TradeComparison from './TradeComparison.jsx'
 import { MdEmail } from 'react-icons/md';
 import { FaEnvelope } from 'react-icons/fa';
 import { calculateBusinessDays } from '../../utils/dateUtils';
@@ -87,6 +87,9 @@ const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick })
   };
 
   const getDisplayStatus = (status) => {
+    if (trade.recordType === 'advisory') {
+      return 'UNMATCHED';
+    }
     return status || 'UNMATCHED';
   };
 
@@ -119,10 +122,7 @@ const TradeRow = ({ trade, className, onEmailClick, isExpanded, onExpandClick })
   };
 
   const getContraValue = () => {
-    if (trade.recordType === 'advisory') {
-      return trade.contra_firm_id || 'N/A';
-    }
-    return trade.member_firm_id || 'N/A';
+    return trade.contra_firm_id || 'N/A';
   };
 
   const getAge = () => {

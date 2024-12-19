@@ -5,6 +5,7 @@ import Contacts from './components/Contacts/Contacts'
 import './styles/main.css'
 import messageProcessorService from './services/messageProcessorService';
 import FICCSimulatorControl from './components/dev/FICCSimulatorControl';
+import FixTester from './components/dev/FixTester';
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('trades')
@@ -51,7 +52,10 @@ const App = () => {
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
       
       {process.env.NODE_ENV === 'development' && (
-        <FICCSimulatorControl />
+        <>
+          <FICCSimulatorControl />
+          <FixTester />
+        </>
       )}
       
       <main>

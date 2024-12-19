@@ -1,0 +1,111 @@
+.expanded-row {
+  padding: 1.5rem;
+  background-color: #ffffff;
+  margin: 1rem 0;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.comparison-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+/* Header styles */
+.comparison-table thead th {
+  background-color: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Cell styles */
+.comparison-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1f2937;
+}
+
+/* Field column */
+.comparison-table td:first-child {
+  color: #64748b;
+  font-weight: 500;
+  width: 20%;
+}
+
+/* Data columns */
+.comparison-table td:nth-child(2),
+.comparison-table td:nth-child(3) {
+  width: 40%;
+  font-family: monospace;
+}
+
+/* Difference highlighting */
+.comparison-table tr.different {
+  background-color: #fee2e2;
+}
+
+.comparison-table tr.different td {
+  background-color: #fee2e2;
+}
+
+/* No data styling */
+.comparison-message {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Ensure consistent number alignment */
+.comparison-table td:nth-child(2),
+.comparison-table td:nth-child(3) {
+  text-align: left;
+}
+
+/* Add subtle hover effect */
+.comparison-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Keep different highlighting on hover */
+.comparison-table tr.different:hover {
+  background-color: #fee2e2;
+}
+
+/* Make sure header stays white */
+.comparison-table thead tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Fix the hover state for different rows */
+.comparison-table tr.different:hover {
+  background-color: #fee2e2;
+}
+
+/* Keep TD red background on hover */
+.comparison-table tr.different:hover td {
+  background-color: #fee2e2;
+}
+
+/* Remove the hover effect for rows with differences */
+.comparison-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Keep text dark for readability */
+.comparison-table tr.different td {
+  color: #1f2937;
+} 
