@@ -13,20 +13,20 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 1728px;  /* Match the main width from screenshot */
+  width: 100%;
   margin: 0 auto;
-  padding: 32px;
+  padding: 1rem;
   box-sizing: border-box;
 }
 
 .trade-table-container {
-  width: 1664px;
-  margin: 32px 0;  /* Change from auto to 0 since parent handles centering */
-  padding: 32px;
-  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 2rem;
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow-x: hidden;
 }
 
 .table-wrapper {
@@ -34,25 +34,25 @@ main {
   margin: 0;
   padding: 0;
   overflow-x: auto;
-  position: relative;
+  overflow-y: auto;
   border: 1px solid #ddd;
   border-radius: 4px;
-  box-sizing: border-box;
+  position: relative;
 }
 
 .table-wrapper thead {
   position: sticky;
   top: 0;
-  background-color: #f8f9fa;
-  z-index: 1;
+  background-color: #f8fafc;
+  z-index: 2;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .trade-table {
   width: 100%;
-  min-width: max-content;
+  min-width: 1200px;
   border-collapse: collapse;
-  table-layout: auto;
-  margin: 0;
+  table-layout: fixed;
 }
 
 /* Base styles for all cells */
@@ -78,17 +78,18 @@ main {
 }
 
 /* Adjust column widths to be more compact */
-.trade-table th:nth-child(1) { min-width: 24px; width: auto; }      /* Expand arrow */
-.trade-table th:nth-child(2) { min-width: 75px; width: auto; }      /* Type */
-.trade-table th:nth-child(3) { min-width: 100px; width: auto; }     /* Trade Date */
-.trade-table th:nth-child(4) { min-width: 100px; width: auto; }     /* Settlement Date */
-.trade-table th:nth-child(5) { min-width: 50px; width: auto; }      /* Age */
-.trade-table th:nth-child(6) { min-width: 90px; width: auto; }      /* CUSIP */
-.trade-table th:nth-child(7) { min-width: 100px; width: auto; }     /* Quantity */
-.trade-table th:nth-child(8) { min-width: 120px; width: auto; }     /* Net Money */
-.trade-table th:nth-child(9) { min-width: 70px; width: auto; }      /* Side */
-.trade-table th:nth-child(10) { min-width: 100px; width: auto; }    /* Status */
-.trade-table th:nth-child(11) { min-width: 80px; width: auto; }     /* Actions */
+.trade-table th:nth-child(1) { width: 40px; }       /* Expand arrow */
+.trade-table th:nth-child(2) { width: 100px; }      /* Type */
+.trade-table th:nth-child(3) { width: 100px; }      /* Trade Date */
+.trade-table th:nth-child(4) { width: 100px; }      /* Settlement Date */
+.trade-table th:nth-child(5) { width: 60px; }       /* Age */
+.trade-table th:nth-child(6) { width: 100px; }      /* CUSIP */
+.trade-table th:nth-child(7) { width: 120px; }      /* Quantity */
+.trade-table th:nth-child(8) { width: 140px; }      /* Net Money */
+.trade-table th:nth-child(9) { width: 80px; }       /* Side */
+.trade-table th:nth-child(10) { width: 100px; }     /* Contra */
+.trade-table th:nth-child(11) { width: 100px; }     /* Status */
+.trade-table th:nth-child(12) { width: 80px; }      /* Actions */
 
 /* Prevent text overflow in headers */
 .trade-table th {
@@ -277,12 +278,11 @@ main {
 /* Add/Update these styles */
 .filters-section {
   width: 100%;
-  margin: 0 0 20px 0;
-  padding: 0;
+  margin-bottom: 1.5rem;
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
   gap: 1rem;
+  align-items: center;
 }
 
 .filter-group {
@@ -383,11 +383,19 @@ main {
 /* Table responsive styles */
 @media screen and (max-width: 1200px) {
   .trade-table-container {
-    padding: 0;
+    padding: 1rem;
+  }
+  
+  .filters-section {
+    padding: 0 0.5rem;
   }
 
+  .trade-table-container {
+    padding: 0.5rem;
+    border-radius: 0;
+  }
+  
   .table-wrapper {
-    margin: 0;
     border-radius: 0;
   }
 
@@ -503,18 +511,72 @@ main {
 /* Style the scrollbar */
 .table-wrapper::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .table-wrapper::-webkit-scrollbar-track {
   background: #f1f1f1;
-}
-
-.table-wrapper::-webkit-scrollbar-thumb {
-  background: #888;
   border-radius: 4px;
 }
 
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  border: 2px solid #f1f1f1;
+}
+
 .table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #94a3b8;
+}
+
+/* Handle corner where scrollbars meet */
+.table-wrapper::-webkit-scrollbar-corner {
+  background: #f1f1f1;
+}
+
+/* Ensure rows have consistent height */
+.trade-table tr {
+  height: 56px; /* Adjust this value to match your design */
+}
+
+/* Add hover effect for rows */
+.trade-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Update existing styles with better typography */
+.trade-table th {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #4B5563;
+}
+
+.trade-table td {
+  font-size: 0.9375rem;
+  color: #1F2937;
+}
+
+/* Status badges */
+.status-pending,
+.status-matched,
+.status-unmatched,
+.status-rejected {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Filter labels */
+.filter-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4B5563;
+  letter-spacing: -0.01em;
+}
+
+.filter-group input[type="text"] {
+  font-size: 0.9375rem;
+  font-family: var(--font-sans);
 }
   

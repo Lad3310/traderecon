@@ -1,0 +1,28 @@
+.trades-dashboard {
+  background-color: white;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 2rem auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dev-controls {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+@media (max-width: 640px) {
+  .trades-dashboard {
+    padding: 1rem;
+    margin: 1rem auto;
+  }
+  
+  .dev-controls {
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+  }
+} 

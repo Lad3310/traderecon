@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './TradeComparison.css';
 
+const TruncatedValue = ({ value, fullValue }) => {
+  if (!value) return 'N/A';
+  return (
+    <span className="truncated-value" title={fullValue || value}>
+      {value}
+    </span>
+  );
+};
+
 const TradeComparison = ({ trade, ficcTrade }) => {
   const [comparison, setComparison] = useState({
     internal: {},
@@ -76,11 +85,19 @@ const TradeComparison = ({ trade, ficcTrade }) => {
     
     if (!internal || !ficc) return true;
     
+    if (field === 'net_money') {
+      const internalValue = parseFloat(internal.toString().replace(/[^0-9.-]+/g, ''));
+      const ficcValue = parseFloat(ficc.toString().replace(/[^0-9.-]+/g, ''));
+      console.log('Net Money Comparison:', {
+        internal: internalValue,
+        ficc: ficcValue,
+        diff: Math.abs(internalValue - ficcValue)
+      });
+      return Math.abs(internalValue - ficcValue) > 0.01;
+    }
+    
     if (field === 'price') {
       return Math.abs(internal - ficc) > 0.0001;
-    }
-    if (field === 'net_money') {
-      return Math.abs(internal - ficc) > 0.01;
     }
     
     return internal.toString() !== ficc.toString();
@@ -147,7 +164,7 @@ const TradeComparison = ({ trade, ficcTrade }) => {
             <td>{trade.recordType === 'advisory' ? '' : formatPrice(comparison.internal.price)}</td>
             <td>{getCounterpartyValue('price', formatPrice)}</td>
           </tr>
-          <tr>
+          <tr className={isDifferent('net_money') ? 'different' : ''}>
             <td>Net Money</td>
             <td>{trade.recordType === 'advisory' ? '' : formatMoney(comparison.internal.net_money)}</td>
             <td>{getCounterpartyValue('net_money', formatMoney)}</td>
@@ -161,6 +178,21 @@ const TradeComparison = ({ trade, ficcTrade }) => {
             <td>Clearing Number</td>
             <td>{trade.recordType === 'advisory' ? '' : (comparison.internal.clearing_number || 'N/A')}</td>
             <td>{getCounterpartyValue('clearing_number')}</td>
+          </tr>
+          <tr>
+            <td>Internal ID</td>
+            <td>{trade.recordType === 'advisory' ? '' : trade.id}</td>
+            <td>{ficcTrade?.id || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td>FICC Reference</td>
+            <td>{trade.recordType === 'advisory' ? '' : (trade.external_reference || 'N/A')}</td>
+            <td>{ficcTrade?.external_reference || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td>Message Reference</td>
+            <td>{trade.recordType === 'advisory' ? '' : (trade.transaction_id || 'N/A')}</td>
+            <td>{ficcTrade?.trade_reference || 'N/A'}</td>
           </tr>
         </tbody>
       </table>

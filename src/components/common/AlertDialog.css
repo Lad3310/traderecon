@@ -9,65 +9,135 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .alert-dialog {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  width: 90%;
   max-width: 400px;
-  width: 100%;
+  animation: slideIn 0.2s ease-out;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.alert-dialog-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.alert-dialog-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.alert-header {
+  padding: 1.5rem;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  flex-shrink: 0;
+  gap: 1rem;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.alert-dialog-content.error .alert-dialog-icon {
-  background-color: #FEE2E2;
+.alert-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.alert-icon {
+  font-size: 1.5rem;
+}
+
+.alert-icon.success {
+  color: #059669;
+}
+
+.alert-icon.error {
   color: #DC2626;
 }
 
-.alert-dialog-content.info .alert-dialog-icon {
-  background-color: #DBEAFE;
-  color: #2563EB;
+.alert-icon.warning {
+  color: #D97706;
 }
 
-.alert-dialog-message {
-  color: #1F2937;
-  font-size: 0.95rem;
+.alert-icon.delete {
+  color: #DC2626;
+}
+
+.alert-content {
+  padding: 1.5rem;
+  color: #4B5563;
+  font-size: 1rem;
   line-height: 1.5;
-  flex: 1;
 }
 
-.alert-dialog-button {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #F3F4F6;
-  border: none;
+.alert-actions {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.alert-actions button {
+  padding: 0.5rem 1rem;
   border-radius: 6px;
-  color: #1F2937;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
-.alert-dialog-button:hover {
-  background-color: #E5E7EB;
+.cancel-btn {
+  background: #F3F4F6;
+  border: none;
+  color: #4B5563;
+}
+
+.cancel-btn:hover {
+  background: #E5E7EB;
+}
+
+.confirm-btn {
+  border: none;
+  color: white;
+}
+
+.confirm-btn.success {
+  background: #059669;
+}
+
+.confirm-btn.success:hover {
+  background: #047857;
+}
+
+.confirm-btn.error,
+.confirm-btn.delete {
+  background: #DC2626;
+}
+
+.confirm-btn.error:hover,
+.confirm-btn.delete:hover {
+  background: #B91C1C;
+}
+
+.confirm-btn.warning {
+  background: #D97706;
+}
+
+.confirm-btn.warning:hover {
+  background: #B45309;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .alert-dialog {
+    width: 95%;
+    margin: 1rem;
+  }
 } 

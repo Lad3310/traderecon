@@ -179,8 +179,22 @@ Trade Operations
           </label>
         </div>
       </div>
-      <div className="table-wrapper" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+      <div className="table-wrapper" style={{ maxHeight: '640px' }}>
         <table className="trade-table">
+          <colgroup>
+            <col style={{ width: '40px' }} />      {/* Expand arrow */}
+            <col style={{ width: '100px' }} />     {/* Type */}
+            <col style={{ width: '100px' }} />     {/* Trade Date */}
+            <col style={{ width: '100px' }} />     {/* Settlement Date */}
+            <col style={{ width: '60px' }} />      {/* Age */}
+            <col style={{ width: '100px' }} />     {/* CUSIP */}
+            <col style={{ width: '120px' }} />     {/* Quantity */}
+            <col style={{ width: '140px' }} />     {/* Net Money */}
+            <col style={{ width: '80px' }} />      {/* Side */}
+            <col style={{ width: '100px' }} />     {/* Contra */}
+            <col style={{ width: '100px' }} />     {/* Status */}
+            <col style={{ width: '80px' }} />      {/* Actions */}
+          </colgroup>
           <thead>
             <tr>
               <th></th>

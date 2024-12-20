@@ -1,16 +1,10 @@
-.app-wrapper {
-  min-height: 100vh;
-  background-color: #f9fafb;
-  padding: 2rem 1rem;
-}
-
 .contacts-dashboard {
   background-color: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 2rem;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 2rem auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-header {
@@ -45,6 +39,20 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 1200px) {
+  .contacts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .contacts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
 .contact-card {
@@ -88,8 +96,10 @@
 .contact-title h3 {
   margin: 0;
   color: #1a1a1a;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #1F2937;
 }
 
 .mpid-tag {
@@ -97,7 +107,9 @@
   background: #F3F4F6;
   padding: 0.25rem 0.75rem;
   border-radius: 16px;
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   color: #4B5563;
   margin-top: 0.5rem;
 }
@@ -116,12 +128,14 @@
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  font-size: 0.9375rem;
 }
 
 .label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   color: #6B7280;
-  font-size: 0.9rem;
-  min-width: 60px;
 }
 
 .info-item a {
@@ -278,12 +292,68 @@
 
 /* Add responsive padding adjustments */
 @media (max-width: 640px) {
-  .app-wrapper {
-    padding: 1rem 0.5rem;
-  }
-  
   .contacts-dashboard {
     padding: 1rem;
     border-radius: 8px;
+  }
+} 
+
+/* Add/modify responsive styles */
+@media (max-width: 768px) {
+  .contacts-dashboard {
+    padding: 1rem;
+  }
+
+  .contacts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .contact-card {
+    margin-bottom: 0.5rem;
+  }
+
+  .contact-header {
+    padding: 1rem;
+  }
+
+  .contact-body {
+    padding: 1rem;
+  }
+
+  .contact-actions {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: 95%;
+    margin: 0.5rem;
+  }
+
+  .modal-header,
+  .modal-form,
+  .modal-actions {
+    padding: 1rem;
+  }
+
+  .contact-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .contact-title h3 {
+    font-size: 1rem;
+  }
+
+  .info-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .label {
+    min-width: auto;
   }
 } 

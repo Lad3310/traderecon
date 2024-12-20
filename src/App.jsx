@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import Navigation from './components/Navigation/Navigation'
-import TradeTable from './components/TradeTable/TradeTable'
-import Contacts from './components/Contacts/Contacts'
-import './styles/main.css'
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navigation from './components/layout/Navigation';
+import Trades from './components/Trades/Trades';
+import Contacts from './components/Contacts/Contacts';
+import Testing from './components/Testing/Testing';
 import messageProcessorService from './services/messageProcessorService';
-import FICCSimulatorControl from './components/dev/FICCSimulatorControl';
-import FixTester from './components/dev/FixTester';
+import './App.css';
 
-const App = () => {
-  const [activeTab, setActiveTab] = useState('trades')
-
+function App() {
   useEffect(() => {
     messageProcessorService.startProcessing();
     return () => {
@@ -28,41 +26,22 @@ const App = () => {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'trades':
-        return (
-          <div className="section">
-            <TradeTable />
-          </div>
-        );
-      case 'contacts':
-        return (
-          <div className="section">
-            <Contacts />
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="app">
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
-      
-      {process.env.NODE_ENV === 'development' && (
-        <>
-          <FICCSimulatorControl />
-          <FixTester />
-        </>
-      )}
-      
-      <main>
-        {renderContent()}
-      </main>
-    </div>
-  )
+    <Router>
+      <div className="app">
+        <Navigation />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Trades />} />
+            <Route path="/contacts" element={<Contacts />} />
+            {process.env.NODE_ENV === 'development' && (
+              <Route path="/testing" element={<Testing />} />
+            )}
+          </Routes>
+        </main>
+      </div>
+    </Router>
+  );
 }
 
-export default App 
+export default App; 

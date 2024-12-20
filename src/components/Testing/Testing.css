@@ -1,0 +1,24 @@
+.testing-dashboard {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.testing-dashboard h1 {
+  margin-bottom: 2rem;
+  color: #1F2937;
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+  .testing-dashboard {
+    padding: 1rem;
+  }
+  
+  .testing-dashboard h1 {
+    font-size: 1.5rem;
+  }
+} 
