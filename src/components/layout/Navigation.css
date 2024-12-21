@@ -6,6 +6,7 @@
   align-items: center;
   color: white;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
 .nav-left {
@@ -60,6 +61,10 @@
     display: block;
   }
 
+  .nav-left {
+    width: 100%;
+  }
+
   .nav-links {
     display: none;
     position: absolute;
@@ -71,6 +76,7 @@
     padding: 1rem;
     gap: 1rem;
     z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   }
 
   .nav-links.active {
@@ -78,6 +84,19 @@
   }
 
   .nav-link {
-    padding: 0.5rem 0;
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+  }
+
+  .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-brand {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
   }
 } 

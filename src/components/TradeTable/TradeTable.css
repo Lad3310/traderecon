@@ -20,24 +20,18 @@ main {
 }
 
 .trade-table-container {
+  padding: 0;
   width: 100%;
-  margin: 0;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow-x: hidden;
+  height: 100%;
+  background-color: #fff;
 }
 
 .table-wrapper {
   width: 100%;
-  margin: 0;
-  padding: 0;
   overflow-x: auto;
   overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  position: relative;
+  max-height: calc(100vh - 180px);
+  border-radius: 0;
 }
 
 .table-wrapper thead {
@@ -50,9 +44,8 @@ main {
 
 .trade-table {
   width: 100%;
-  min-width: 1200px;
   border-collapse: collapse;
-  table-layout: fixed;
+  background-color: #fff;
 }
 
 /* Base styles for all cells */
@@ -277,12 +270,12 @@ main {
 
 /* Add/Update these styles */
 .filters-section {
-  width: 100%;
-  margin-bottom: 1.5rem;
   display: flex;
-  flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .filter-group {
@@ -578,5 +571,12 @@ main {
 .filter-group input[type="text"] {
   font-size: 0.9375rem;
   font-family: var(--font-sans);
+}
+
+/* Remove any margin/padding from the container div */
+.trades-dashboard {
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
   
