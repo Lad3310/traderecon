@@ -20,18 +20,19 @@ main {
 }
 
 .trade-table-container {
-  padding: 0;
   width: 100%;
   height: 100%;
   background-color: #fff;
+  overflow-x: hidden;
+  position: relative;
 }
 
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
-  overflow-y: auto;
-  max-height: calc(100vh - 180px);
-  border-radius: 0;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  max-width: 100vw;
 }
 
 .table-wrapper thead {
@@ -353,10 +354,18 @@ main {
 
 /* Media queries for filters */
 @media screen and (max-width: 768px) {
+  .trade-table-container {
+    padding: 0;
+    margin: 0;
+    width: 100vw;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   .filters-section {
+    padding: 0.5rem;
     flex-direction: column;
-    align-items: stretch;
-    padding: 1rem 0.5rem;
+    gap: 0.5rem;
   }
 
   .filter-group {
@@ -364,12 +373,21 @@ main {
   }
 
   .filter-group input[type="text"] {
-    flex: 1;
     width: 100%;
+    box-sizing: border-box;
   }
 
-  .filter-group.checkbox {
-    justify-content: center;
+  .table-wrapper {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Adjust table cell padding for mobile */
+  .trade-table th,
+  .trade-table td {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.875rem;
   }
 }
 
@@ -577,6 +595,8 @@ main {
 .trades-dashboard {
   margin: 0;
   padding: 0;
-  height: 100%;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
   
